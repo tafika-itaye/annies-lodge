@@ -1,286 +1,635 @@
 <!DOCTYPE html>
-<html lang=""en"">
+<html lang="en">
 <head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Annie's Lodge - Phase 1 ERP/PMS Demo</title>
-    <script src=""https://cdn.jsdelivr.net/npm/chart.js""></script>
-    <style>
-        * {margin:0;padding:0;box-sizing:border-box;}
-        body {font-family:system-ui,sans-serif;background:#f5f5dc;}
-        .splash {position:fixed;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(135deg,#006400,#228B22);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:9999;}
-        .splash-logo {height:100px;margin-bottom:20px;}
-        .loader {width:50px;height:50px;border:3px solid rgba(255,255,255,0.3);border-top:3px solid #daa520;border-radius:50%;animation:spin 1s linear infinite;}
-        @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-        .app.hidden {display:none;}
-        header {background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);padding:1rem 2rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:100;box-shadow:0 4px 30px rgba(0,0,0,0.1);}
-        .logo {height:40px;}
-        nav button {background:none;border:1px solid #ddd;padding:.5rem 1rem;border-radius:20px;cursor:pointer;transition:all .3s;}
-        nav button.active {background:#006400;color:#fff;border-color:#006400;}
-        .section {padding:2rem;min-height:100vh;opacity:0;transition:all .5s;}
-        .section.active {opacity:1;}
-        .hero {height:50vh;background:#8B4513;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,0.5);}
-        .hero h1 {font-size:2.5rem;margin-bottom:.5rem;}
-        .locations {display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-top:2rem;}
-        .location-card {background:#fff;border-radius:15px;padding:1.5rem;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.1);}
-        .filter-bar {display:flex;gap:1rem;margin-bottom:2rem;align-items:center;flex-wrap:wrap;}
-        .rooms-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;}
-        .room-card {background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.1);transition:transform .3s;}
-        .room-card:hover {transform:translateY(-5px);}
-        .room-img {width:100%;height:200px;object-fit:cover;}
-        .room-info {padding:1.5rem;}
-        .room-price {font-size:1.5rem;font-weight:bold;color:#006400;}
-        .login-form {max-width:400px;margin:4rem auto;background:#fff;padding:2rem;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,0.1);}
-        .kpi-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin:2rem 0;}
-        .kpi-card {background:#fff;padding:1.5rem;border-radius:15px;text-align:center;box-shadow:0 8px 25px rgba(0,0,0,0.1);}
-        .gauge {font-size:2rem;color:#28a745;font-weight:bold;}
-        .dashboard-tabs {display:flex;gap:.5rem;margin-bottom:1.5rem;overflow-x:auto;}
-        .tab-btn {background:none;border:1px solid #ddd;padding:.5rem 1rem;border-radius:20px;cursor:pointer;white-space:nowrap;}
-        .tab-btn.active {background:#006400;color:#fff;}
-        .tab-panel {display:none;}
-        .tab-panel.active {display:block;}
-        table {width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 5px 20px rgba(0,0,0,0.1);margin:1rem 0;}
-        th,td {padding:1rem;text-align:left;border-bottom:1px solid #eee;}
-        th {background:#f8f9fa;}
-        .whatsapp {position:fixed;bottom:20px;right:20px;background:#25d366;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(37,211,102,0.4);}
-        @media (max-width:768px) {.hero h1 {font-size:1.8rem;}.kpi-grid {grid-template-columns:1fr;}}
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annie's Lodge Malawi – Multi-Site ERP & Booking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --forest: #005e20;
+      --forest-light: #1a8a3a;
+      --gold: #c8960c;
+      --gold-light: #f0b429;
+      --cream: #faf7f0;
+      --warm-gray: #f2ede4;
+      --text: #1a1a1a;
+      --text-muted: #6b6b6b;
+      --white: #ffffff;
+      --shadow-sm: 0 2px 12px rgba(0,0,0,0.08);
+      --shadow-md: 0 8px 32px rgba(0,0,0,0.12);
+      --shadow-lg: 0 20px 60px rgba(0,0,0,0.18);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+
+    /* ── Splash Screen ── */
+    #splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(160deg, #003d14 0%, #005e20 50%, #007a28 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1.5rem; transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #splash.hidden { opacity: 0; visibility: hidden; }
+    .splash-logo { height: 90px; filter: brightness(0) invert(1) drop-shadow(0 6px 20px rgba(0,0,0,0.4)); }
+    .splash-title { font-family: 'Playfair Display', serif; color: white; font-size: 1.6rem; letter-spacing: 0.04em; }
+    .splash-sub { color: rgba(255,255,255,0.6); font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .loader {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: var(--gold-light);
+      border-radius: 50%; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Header ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      padding: 0.75rem 2rem;
+      display: flex; align-items: center; gap: 1.5rem;
+    }
+    .logo { height: 42px; object-fit: contain; }
+    .logo-text { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--forest); line-height: 1.2; }
+    .logo-text span { display: block; font-size: 0.7rem; font-family: 'DM Sans', sans-serif; font-weight: 400; color: var(--text-muted); letter-spacing: 0.06em; }
+    nav { margin-left: auto; display: flex; gap: 0.5rem; }
+    .nav-btn {
+      background: none; border: 1.5px solid #ddd;
+      padding: 0.5rem 1.25rem; border-radius: 50px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+      cursor: pointer; transition: all 0.25s ease; color: var(--text-muted); white-space: nowrap;
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--forest); color: white; border-color: var(--forest);
+    }
+
+    /* ── Sections ── */
+    .section { display: none; min-height: 100vh; animation: fadeUp 0.5s ease both; }
+    .section.active { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 62vh;
+      background: linear-gradient(to bottom, rgba(0,30,10,0.55) 0%, rgba(0,20,6,0.72) 100%),
+                  url('images/hero-bg.jpg') center/cover no-repeat;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 4rem 2rem; color: white;
+    }
+    .hero-eyebrow { font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 1rem; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.15; margin-bottom: 1rem; }
+    .hero p { font-size: 1.1rem; opacity: 0.85; margin-bottom: 2rem; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: white; border: none; padding: 0.9rem 2.4rem;
+      border-radius: 50px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(200,150,12,0.45);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(200,150,12,0.55); }
+
+    /* ── Location Cards ── */
+    .locations-section { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
+    .section-title { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--forest); margin-bottom: 0.5rem; }
+    .section-sub { color: var(--text-muted); margin-bottom: 2.5rem; }
+    .locations-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .location-card {
+      background: white; border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow-md); transition: all 0.35s ease;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .location-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
+    .location-card img { width: 100%; height: 200px; object-fit: cover; }
+    .location-card-body { padding: 1.5rem; }
+    .location-card h3 { font-family: 'Playfair Display', serif; color: var(--forest); font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .location-card p { color: var(--text-muted); font-size: 0.9rem; }
+    .badge { display: inline-block; background: var(--warm-gray); color: var(--forest); font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.7rem; border-radius: 20px; margin-top: 0.5rem; }
+
+    /* ── Rooms ── */
+    .rooms-section { padding: 3rem 2rem; max-width: 1300px; margin: 0 auto; }
+    .filter-bar {
+      display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+      background: white; padding: 1.2rem 1.5rem; border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); margin-bottom: 2rem;
+    }
+    .filter-bar select, .filter-bar input[type="range"] { padding: 0.5rem; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+    .price-display { font-weight: 600; color: var(--forest); min-width: 4rem; }
+    .btn-whatsapp {
+      margin-left: auto; background: #25D366; color: white; border: none;
+      padding: 0.6rem 1.4rem; border-radius: 50px; font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.25s;
+    }
+    .btn-whatsapp:hover { background: #1da750; transform: translateY(-2px); }
+    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+    .room-card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); transition: all 0.35s ease; }
+    .room-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); }
+    .room-img { width: 100%; height: 220px; object-fit: cover; display: block; }
+    .room-info { padding: 1.5rem; }
+    .room-site { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; }
+    .room-type { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .room-price { font-size: 1.6rem; font-weight: 800; color: var(--gold); margin: 0.5rem 0 1rem; }
+    .room-price span { font-size: 0.85rem; font-weight: 400; color: var(--text-muted); }
+    .room-amenities { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .amenity-tag { background: var(--warm-gray); padding: 0.2rem 0.6rem; border-radius: 20px; }
+    .btn-book { width: 100%; padding: 0.8rem; border-radius: 10px; border: none; background: var(--forest); color: white; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; }
+    .btn-book:hover { background: var(--forest-light); }
+
+    /* ── ERP Portal ── */
+    .portal-section { padding: 3rem 2rem; min-height: 100vh; }
+    .login-card {
+      max-width: 420px; margin: 2rem auto;
+      background: white; padding: 3rem; border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+    }
+    .login-card h2 { font-family: 'Playfair Display', serif; color: var(--forest); font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .login-card p { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem; }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-group input { width: 100%; padding: 0.85rem 1rem; border: 1.5px solid #ddd; border-radius: 10px; font-size: 1rem; transition: border-color 0.2s; }
+    .form-group input:focus { outline: none; border-color: var(--forest); }
+    .demo-hint { background: var(--warm-gray); padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.83rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .btn-login { width: 100%; padding: 1rem; background: var(--forest); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-login:hover { background: var(--forest-light); }
+
+    /* ── Dashboard ── */
+    #dashboard { display: none; padding: 0; }
+    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .dash-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--forest); }
+    .dash-date { font-size: 0.85rem; color: var(--text-muted); }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .kpi-card {
+      background: white; padding: 1.5rem; border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); text-align: center; transition: transform 0.25s;
+    }
+    .kpi-card:hover { transform: translateY(-4px); }
+    .kpi-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .kpi-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem; }
+    .kpi-value { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--forest); font-weight: 700; }
+    .kpi-value.gold { color: var(--gold); }
+    .kpi-value.alert { color: #e05c00; }
+
+    .dash-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: var(--warm-gray); padding: 0.4rem; border-radius: 12px; overflow-x: auto; }
+    .tab-btn { background: none; border: none; padding: 0.6rem 1.4rem; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; color: var(--text-muted); white-space: nowrap; }
+    .tab-btn.active { background: white; color: var(--forest); box-shadow: var(--shadow-sm); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeUp 0.35s ease both; }
+
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+    thead { background: var(--warm-gray); }
+    th { padding: 1rem 1.2rem; text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700; }
+    td { padding: 1rem 1.2rem; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(0,94,32,0.03); }
+
+    .status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .status.confirmed { background: #e6f9ed; color: #1a7a3a; }
+    .status.checked-in { background: #e8f0fe; color: #1a56db; }
+    .status.paid { background: #e6f9ed; color: #1a7a3a; }
+    .status.pending { background: #fff3e0; color: #c05f00; }
+    .stock-low { color: #e05c00; font-weight: 600; }
+
+    .chart-container { background: white; padding: 2rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; }
+    .erp-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+    .btn-action {
+      padding: 0.75rem 2rem; border-radius: 50px; border: none; font-weight: 600;
+      font-size: 0.9rem; cursor: pointer; transition: all 0.25s;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .btn-action.primary { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: white; box-shadow: 0 6px 20px rgba(200,150,12,0.35); }
+    .btn-action.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(200,150,12,0.5); }
+    .btn-action.secondary { background: white; color: var(--forest); border: 1.5px solid var(--forest); }
+    .btn-action.secondary:hover { background: var(--forest); color: white; }
+
+    /* ── Payments ── */
+    .payments-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; }
+    .payment-form {
+      background: white; padding: 2rem; border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); margin-top: 2rem;
+    }
+    .payment-form h3 { font-family: 'Playfair Display', serif; color: var(--forest); margin-bottom: 1.5rem; }
+    .payment-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+    .payment-row select, .payment-row input[type="number"] {
+      flex: 1; min-width: 150px; padding: 0.8rem 1rem;
+      border: 1.5px solid #ddd; border-radius: 10px; font-size: 1rem;
+    }
+    .btn-pay { padding: 0.8rem 2rem; background: var(--forest); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-pay:hover { background: var(--forest-light); }
+
+    /* ── WhatsApp Float ── */
+    .whatsapp-float {
+      position: fixed; bottom: 24px; right: 24px; z-index: 500;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; box-shadow: 0 8px 28px rgba(37,211,102,0.5);
+      transition: all 0.3s ease; font-size: 1.6rem;
+    }
+    .whatsapp-float:hover { transform: scale(1.12) rotate(6deg); box-shadow: 0 14px 36px rgba(37,211,102,0.65); }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      header { padding: 0.75rem 1rem; }
+      .nav-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+      .hero h1 { font-size: 2rem; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .rooms-grid { grid-template-columns: 1fr; }
+      .login-card { padding: 2rem 1.5rem; }
+    }
+    @media (max-width: 400px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      nav { gap: 0.25rem; }
+      .nav-btn { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+    }
+  </style>
 </head>
 <body>
-<div id=""splash"" class=""splash"">
-<img src=""images/splash-logo.png"" alt=""Annie's Lodge"" class=""splash-logo"">
-<div class=""loader""></div>
-<p>TechNexus MW - Phase 1 Loading...</p>
+
+<!-- Splash -->
+<div id="splash">
+  <img src="images/splash-logo.png" alt="Annie's Lodge" class="splash-logo"
+       onerror="this.style.display='none'">
+  <div class="splash-title">Annie's Lodge Malawi</div>
+  <div class="loader"></div>
+  <div class="splash-sub">TechNexus MW · Phase 1</div>
 </div>
 
-<div id=""app"" class=""app hidden"">
-<header>
-<img src=""images/annie-logo.png"" alt=""Logo"" class=""logo"">
-<nav>
-<button class=""nav-btn active"" onclick=""showSection('home')"">Home</button>
-<button class=""nav-btn"" onclick=""showSection('rooms')"">Rooms</button>
-<button class=""nav-btn"" onclick=""showSection('portal')"">ERP Portal</button>
-<button class=""nav-btn"" onclick=""showSection('payments')"">Payments</button>
-</nav>
-</header>
+<!-- App -->
+<div id="app" style="display:none;">
+  <header>
+    <img src="images/annie-logo.png" alt="Annie's Lodge" class="logo"
+         onerror="this.style.display='none'">
+    <div class="logo-text">Annie's Lodge <span>Malawi · Multi-Site ERP</span></div>
+    <nav>
+      <button class="nav-btn active" data-section="home">Home</button>
+      <button class="nav-btn" data-section="rooms">Rooms</button>
+      <button class="nav-btn" data-section="portal">ERP Portal</button>
+      <button class="nav-btn" data-section="payments">Payments</button>
+    </nav>
+  </header>
 
-<section id=""home"" class=""section active"">
-<div class=""hero"">
-<h1>Annie's Lodge Malawi</h1>
-<p>Lilongwe • Zomba • Blantyre<br>Multi-Site ERP & Booking System</p>
-<button class=""cta-btn"" onclick=""showSection('rooms')"">Book Room</button>
-</div>
-<div class=""locations"">
-<div class=""location-card"">
-<img src=""images/map-zomba.png"" alt=""Zomba"" style=""width:100%;height:150px;object-fit:cover;border-radius:10px;"">
-<h3>Zomba HQ (34 Rooms)</h3>
-</div>
-<div class=""location-card"">
-<img src=""images/map-lilongwe.png"" alt=""Lilongwe"" style=""width:100%;height:150px;object-fit:cover;border-radius:10px;"">
-<h3>Lilongwe Area 10</h3>
-</div>
-<div class=""location-card"">
-<img src=""images/map-blantyre.png"" alt=""Blantyre"" style=""width:100%;height:150px;object-fit:cover;border-radius:10px;"">
-<h3>Blantyre Nyambadwe</h3>
-</div>
-</div>
-</section>
+  <!-- HOME -->
+  <section id="home" class="section active">
+    <div class="hero">
+      <div class="hero-eyebrow">Malawi's Premier Lodge Network</div>
+      <h1>Annie's Lodge</h1>
+      <p>Lilongwe · Zomba · Blantyre · Cape Maclear</p>
+      <button class="btn-primary" onclick="showSection('rooms')">Book a Room</button>
+    </div>
+    <div class="locations-section">
+      <div class="section-title">Our Locations</div>
+      <p class="section-sub">Four distinct properties across Malawi's most vibrant cities</p>
+      <div class="locations-grid">
+        <div class="location-card">
+          <img src="images/map-zomba.png" alt="Zomba" onerror="this.src=''; this.style.height='140px'; this.style.background='#e8f4e8';">
+          <div class="location-card-body">
+            <h3>Zomba HQ</h3>
+            <p>Our flagship property in the historic capital</p>
+            <div class="badge">34 Rooms</div>
+          </div>
+        </div>
+        <div class="location-card">
+          <img src="images/map-lilongwe.png" alt="Lilongwe" onerror="this.src=''; this.style.height='140px'; this.style.background='#e8f4e8';">
+          <div class="location-card-body">
+            <h3>Lilongwe Area 10</h3>
+            <p>Business hub location near the city centre</p>
+            <div class="badge">Executive Suites</div>
+          </div>
+        </div>
+        <div class="location-card">
+          <img src="images/map-blantyre.png" alt="Blantyre" onerror="this.src=''; this.style.height='140px'; this.style.background='#e8f4e8';">
+          <div class="location-card-body">
+            <h3>Blantyre Nyambadwe</h3>
+            <p>Commercial capital with mountain views</p>
+            <div class="badge">Luxury Rooms</div>
+          </div>
+        </div>
+        <div class="location-card">
+          <img src="images/capemaclear_lake.jpg" alt="Cape Maclear" onerror="this.src=''; this.style.height='140px'; this.style.background='#d4ecf7';">
+          <div class="location-card-body">
+            <h3>Cape Maclear</h3>
+            <p>Lake Malawi lakefront escape</p>
+            <div class="badge">Lake View</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<section id=""rooms"" class=""section"">
-<div class=""filter-bar"">
-<select id=""site-filter"" onchange=""filterRooms()"">
-<option>All Sites</option>
-<option>Zomba HQ</option>
-<option>Lilongwe Area 10</option>
-<option>Blantyre Nyambadwe</option>
-</select>
-<input type=""range"" id=""price-filter"" min=""30"" max=""150"" value=""150"" oninput=""updatePrice(this.value);filterRooms()"">
-<span id=""price-value"">$150</span>
-<button onclick=""bookDemo()"">WhatsApp Book</button>
-</div>
-<div id=""rooms-grid""></div>
-</section>
+  <!-- ROOMS -->
+  <section id="rooms" class="section">
+    <div class="rooms-section">
+      <div class="section-title">Available Rooms</div>
+      <p class="section-sub">Filter by location and budget</p>
+      <div class="filter-bar">
+        <select id="site-filter" onchange="filterRooms()">
+          <option value="">All Sites</option>
+          <option value="Zomba HQ">Zomba HQ</option>
+          <option value="Lilongwe Area 10">Lilongwe Area 10</option>
+          <option value="Blantyre Nyambadwe">Blantyre Nyambadwe</option>
+          <option value="Cape Maclear">Cape Maclear</option>
+        </select>
+        <label style="font-size:0.85rem;color:#666;">Max price:</label>
+        <input type="range" id="price-filter" min="30" max="150" value="150" oninput="filterRooms()">
+        <span class="price-display" id="price-value">$150</span>
+        <button class="btn-whatsapp" onclick="openWhatsApp('all')">
+          📱 WhatsApp Book
+        </button>
+      </div>
+      <div class="rooms-grid" id="rooms-grid"></div>
+    </div>
+  </section>
 
-<section id=""portal"" class=""section"">
-<div class=""login-form"">
-<h2>ERP Portal Login</h2>
-<input id=""username"" placeholder=""Username"" value=""admin"">
-<input id=""password"" type=""password"" placeholder=""Password"" value=""demo"">
-<button onclick=""login()"">Login</button>
-</div>
-<div id=""dashboard"" style=""display:none;"">
-<h2>Dashboard - TechNexus MW</h2>
-<div class=""kpi-grid"">
-<div class=""kpi-card"">
-<h3>Occupancy</h3>
-<div class=""gauge"" id=""occupancy"">72%</div>
-</div>
-<div class=""kpi-card"">
-<h3>Revenue Today</h3>
-<p id=""revenue"">$2,450 USD</p>
-</div>
-<div class=""kpi-card"">
-<h3>F&B Alerts</h3>
-<p>2 Low Stock</p>
-</div>
-<div class=""kpi-card"">
-<h3>Pending Check-ins</h3>
-<p>3</p>
-</div>
-</div>
-<div class=""dashboard-tabs"">
-<button class=""tab-btn active"" onclick=""showTab('res')"">Reservations</button>
-<button class=""tab-btn"" onclick=""showTab('inv')"">Inventory</button>
-<button class=""tab-btn"" onclick=""showTab('rep')"">Reports</button>
-</div>
-<div id=""res-tab"" class=""tab-panel active"">
-<table>
-<thead><tr><th>Site</th><th>Guest</th><th>Room</th><th>Status</th></tr></thead>
-<tbody>
-<tr><td>Zomba</td><td>John Doe</td><td>Z001</td><td>Confirmed</td></tr>
-<tr><td>Lilongwe</td><td>Jane Smith</td><td>L002</td><td>Checked In</td></tr>
-</tbody>
-</table>
-</div>
-<div id=""inv-tab"" class=""tab-panel"">
-<table>
-<thead><tr><th>Item</th><th>Stock</th><th>Price MWK</th></tr></thead>
-<tbody>
-<tr><td>Stella Lager</td><td>120</td><td>1,500</td></tr>
-<tr><td>Heineken</td><td><span style=""color:red"">24</span></td><td>1,600</td></tr>
-</tbody>
-</table>
-</div>
-<div id=""rep-tab"" class=""tab-panel"">
-<canvas id=""chart"" width=""400"" height=""200"" style=""max-width:100%;background:#fff;border-radius:10px;""></canvas>
-<button onclick=""generateQuote()"">Generate Quote</button>
-<button onclick=""printDemo()"">Print Invoice</button>
-</div>
-</div>
-</section>
+  <!-- ERP PORTAL -->
+  <section id="portal" class="section">
+    <div class="portal-section">
+      <div id="login-view">
+        <div class="login-card">
+          <h2>ERP Portal</h2>
+          <p>Sign in to access the TechNexus MW dashboard</p>
+          <div class="demo-hint">🔑 Demo credentials: <strong>admin</strong> / <strong>demo</strong></div>
+          <div class="form-group">
+            <label>Username</label>
+            <input id="username" type="text" placeholder="Enter username" value="admin">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input id="password" type="password" placeholder="Enter password" value="demo">
+          </div>
+          <button class="btn-login" onclick="login()">Sign In →</button>
+        </div>
+      </div>
 
-<section id=""payments"" class=""section"">
-<h2>Payments Dashboard</h2>
-<table>
-<thead><tr><th>Invoice</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
-<tbody>
-<tr><td>INV001</td><td>45,000 MWK</td><td>Paid</td><td><img src=""images/pdf-download-icon.png"" onclick=""alert('Receipt PDF')"" style=""width:20px;cursor:pointer;""></td></tr>
-<tr><td>INV002</td><td>130,000 MWK</td><td>Pending</td><td><img src=""images/pdf-download-icon.png"" onclick=""alert('Pay now')"" style=""width:20px;cursor:pointer;""></td></tr>
-</tbody>
-</table>
-<div style=""margin-top:2rem;text-align:center;"">
-<select>
-<option>Airtel Money</option>
-<option>TNM Mpamba</option>
-</select>
-<input type=""number"" placeholder=""Amount MWK"">
-<button onclick=""alert('Payment processed!')"">Pay</button>
-<img src=""images/payment-mobile.png"" style=""height:100px;margin-top:1rem;"">
-</div>
-</section>
+      <div id="dashboard" style="display:none;">
+        <div class="dash-header">
+          <h2>Dashboard – TechNexus MW</h2>
+          <div class="dash-date" id="dash-date"></div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon">🏨</div>
+            <div class="kpi-label">Occupancy</div>
+            <div class="kpi-value">72%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">💵</div>
+            <div class="kpi-label">Revenue Today</div>
+            <div class="kpi-value gold">$2,450</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-label">F&amp;B Alerts</div>
+            <div class="kpi-value alert">2</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🔑</div>
+            <div class="kpi-label">Pending Check-ins</div>
+            <div class="kpi-value">3</div>
+          </div>
+        </div>
 
-<a href=""https://wa.me/265999957608"" class=""whatsapp"" target=""_blank"" title=""WhatsApp Annie's Lodge"">
-📱
+        <div class="dash-tabs">
+          <button class="tab-btn active" data-tab="res">Reservations</button>
+          <button class="tab-btn" data-tab="inv">Inventory</button>
+          <button class="tab-btn" data-tab="rep">Reports</button>
+        </div>
+
+        <!-- Reservations Tab -->
+        <div id="res-tab" class="tab-panel active">
+          <table>
+            <thead>
+              <tr><th>Site</th><th>Guest</th><th>Room</th><th>Check-in</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Zomba HQ</td><td>John Doe</td><td>Z001</td><td>03 Apr 2026</td><td><span class="status confirmed">Confirmed</span></td></tr>
+              <tr><td>Lilongwe</td><td>Jane Smith</td><td>L002</td><td>02 Apr 2026</td><td><span class="status checked-in">Checked In</span></td></tr>
+              <tr><td>Blantyre</td><td>M. Phiri</td><td>B005</td><td>04 Apr 2026</td><td><span class="status confirmed">Confirmed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div id="inv-tab" class="tab-panel">
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Category</th><th>Stock</th><th>Reorder Level</th><th>Price MWK</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Stella Lager</td><td>Beer</td><td>120</td><td>50</td><td>1,500</td></tr>
+              <tr><td>Heineken</td><td>Beer</td><td><span class="stock-low">24 ⚠️</span></td><td>50</td><td>1,600</td></tr>
+              <tr><td>Chicken Peri Peri</td><td>Food</td><td>18</td><td>10</td><td>8,500</td></tr>
+              <tr><td>Nsima &amp; Relish</td><td>Food</td><td>Daily</td><td>—</td><td>3,200</td></tr>
+              <tr><td>Red Wine</td><td>Drinks</td><td><span class="stock-low">6 ⚠️</span></td><td>12</td><td>12,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="rep-tab" class="tab-panel">
+          <div class="chart-container">
+            <canvas id="chart" style="max-height:300px;"></canvas>
+          </div>
+          <div class="erp-actions">
+            <button class="btn-action primary" onclick="generateQuote()">📄 Generate Quote</button>
+            <button class="btn-action secondary" onclick="window.print()">🖨 Print Invoice</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAYMENTS -->
+  <section id="payments" class="section">
+    <div class="payments-section">
+      <div class="section-title">Payments Dashboard</div>
+      <p class="section-sub">Track invoices and process mobile money payments</p>
+      <table style="margin-top:1.5rem;">
+        <thead>
+          <tr><th>Invoice</th><th>Guest</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>INV001</td><td>John Doe</td><td>45,000 MWK</td>
+            <td><span class="status paid">Paid</span></td>
+            <td><button class="btn-action secondary" style="padding:0.4rem 1rem;font-size:0.8rem;" onclick="alert('Downloading receipt…')">📥 Receipt</button></td>
+          </tr>
+          <tr>
+            <td>INV002</td><td>Jane Smith</td><td>130,000 MWK</td>
+            <td><span class="status pending">Pending</span></td>
+            <td><button class="btn-action primary" style="padding:0.4rem 1rem;font-size:0.8rem;" onclick="alert('Redirecting to payment…')">💳 Pay Now</button></td>
+          </tr>
+          <tr>
+            <td>INV003</td><td>M. Phiri</td><td>78,500 MWK</td>
+            <td><span class="status pending">Pending</span></td>
+            <td><button class="btn-action primary" style="padding:0.4rem 1rem;font-size:0.8rem;" onclick="alert('Redirecting to payment…')">💳 Pay Now</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="payment-form">
+        <h3>Pay via Mobile Money</h3>
+        <div class="payment-row">
+          <select>
+            <option>Airtel Money</option>
+            <option>TNM Mpamba</option>
+          </select>
+          <input type="number" placeholder="Amount (MWK)" min="0" step="500">
+          <input type="text" placeholder="Phone number" style="flex:1;min-width:150px;padding:0.8rem 1rem;border:1.5px solid #ddd;border-radius:10px;font-size:1rem;">
+          <button class="btn-pay" onclick="alert('Payment initiated! Check your phone for confirmation.')">Pay Now</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /app -->
+
+<!-- WhatsApp Float -->
+<a href="https://wa.me/265999957608?text=Hello%20Annie%27s%20Lodge%2C%20I%27d%20like%20to%20make%20a%20booking"
+   class="whatsapp-float" target="_blank" rel="noopener" title="Chat with us on WhatsApp">
+  📱
 </a>
 
 <script>
-// Data from CSVs
+/* ── Data ── */
 const ROOMS = [
-  {site:""Zomba HQ"",type:""Standard Single"",rate:45,img:""zomba_standard_single.jpg""},
-  {site:""Lilongwe Area 10"",type:""Executive Double"",rate:65,img:""lilongwe_exec.jpg""},
-  {site:""Blantyre Nyambadwe"",type:""Luxury Suite"",rate:130,img:""blantyre_luxury.jpg""},
-  {site:""Cape Maclear"",type:""Lake View"",rate:70,img:""capemaclear_lake.jpg""}
+  { site: "Zomba HQ",         type: "Standard Single",  rate: 45,  img: "zomba_standard_single.jpg", amenities: ["WiFi","Breakfast","Parking"] },
+  { site: "Zomba HQ",         type: "Double Room",      rate: 65,  img: "zomba_double.jpg",           amenities: ["WiFi","Breakfast","AC"] },
+  { site: "Zomba HQ",         type: "Deluxe Suite",     rate: 90,  img: "zomba_deluxe.jpg",           amenities: ["WiFi","Breakfast","AC","Pool"] },
+  { site: "Zomba HQ",         type: "Conference Suite", rate: 120, img: "zomba_conf_suite.jpg",       amenities: ["WiFi","Projector","Catering"] },
+  { site: "Lilongwe Area 10", type: "Executive Single", rate: 55,  img: "lilongwe_single.jpg",        amenities: ["WiFi","Breakfast","AC"] },
+  { site: "Lilongwe Area 10", type: "Executive Double", rate: 75,  img: "lilongwe_exec.jpg",          amenities: ["WiFi","Breakfast","AC","Gym"] },
+  { site: "Lilongwe Area 10", type: "Family Room",      rate: 95,  img: "lilongwe_family.jpg",        amenities: ["WiFi","Breakfast","AC","2 Beds"] },
+  { site: "Blantyre Nyambadwe","type":"Double Room",    rate: 70,  img: "blantyre_double.jpg",        amenities: ["WiFi","Breakfast","City View"] },
+  { site: "Blantyre Nyambadwe","type":"Luxury Suite",   rate: 130, img: "blantyre_luxury.jpg",        amenities: ["WiFi","Breakfast","AC","Spa"] },
+  { site: "Cape Maclear",     type: "Lake View Chalet", rate: 70,  img: "capemaclear_lake.jpg",       amenities: ["WiFi","Breakfast","Lake View"] },
+  { site: "Cape Maclear",     type: "Beach Bungalow",   rate: 85,  img: "capemaclear_beach.jpg",      amenities: ["WiFi","Breakfast","Beach Access"] },
 ];
-const RESERVATIONS = [""John Doe Z001 Confirmed"",""Jane Smith L002 Checked In""];
 
-// Init
+/* ── Splash ── */
 setTimeout(() => {
-  document.getElementById('splash').style.display='none';
-  document.getElementById('app').style.display='block';
-}, 2500);
+  document.getElementById('splash').classList.add('hidden');
+  document.getElementById('app').style.display = 'block';
+}, 2400);
+
+/* ── Navigation ── */
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    showSection(this.dataset.section);
+  });
+});
 
 function showSection(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id=='rooms') renderRooms();
-  if(id=='portal') document.getElementById('username').focus();
+  document.querySelector(`.nav-btn[data-section="${id}"]`).classList.add('active');
+  if (id === 'rooms') renderRooms();
 }
 
-function renderRooms() {
-  document.getElementById('rooms-grid').innerHTML = ROOMS.map(r => 
-    `<div class=""room-card"">
-      <img src=""images/${r.img}"" class=""room-img"">
-      <div class=""room-info"">
-        <h3>${r.site}</h3>
-        <p>${r.type} - <span class=""room-price"">$${r.rate}</span></p>
-        <button onclick=""bookDemo('${r.site}')"" class=""cta-btn"">Book</button>
+/* ── Rooms ── */
+function renderRooms(filtered) {
+  const rooms = filtered || ROOMS;
+  const grid = document.getElementById('rooms-grid');
+  if (!rooms.length) { grid.innerHTML = '<p style="color:#999;text-align:center;padding:3rem;">No rooms match your filters.</p>'; return; }
+  grid.innerHTML = rooms.map(r => `
+    <div class="room-card">
+      <img src="images/${r.img}" class="room-img" alt="${r.type}"
+           onerror="this.style.background='#e8f4e8';this.style.height='180px';this.src='';">
+      <div class="room-info">
+        <div class="room-site">${r.site}</div>
+        <div class="room-type">${r.type}</div>
+        <div class="room-price">$${r.rate} <span>/ night</span></div>
+        <div class="room-amenities">${r.amenities.map(a => `<span class="amenity-tag">${a}</span>`).join('')}</div>
+        <button class="btn-book" onclick="openWhatsApp('${r.site} – ${r.type}')">Book via WhatsApp</button>
       </div>
-    </div>`
-  ).join('');
+    </div>
+  `).join('');
 }
 
 function filterRooms() {
-  const price = document.getElementById('price-filter').value;
-  document.getElementById('price-value').textContent = '$' + price;
-  document.querySelectorAll('.room-card').forEach(card => {
-    const rate = parseInt(card.querySelector('.room-price').textContent.match(/\d+/)[0]);
-    card.style.display = rate <= price ? 'block' : 'none';
-  });
+  const site = document.getElementById('site-filter').value;
+  const maxPrice = parseInt(document.getElementById('price-filter').value);
+  document.getElementById('price-value').textContent = '$' + maxPrice;
+  const filtered = ROOMS.filter(r =>
+    (!site || r.site === site) && r.rate <= maxPrice
+  );
+  renderRooms(filtered);
 }
 
-function updatePrice(val) {
-  document.getElementById('price-value').textContent = '$' + val;
+function openWhatsApp(room) {
+  const msg = encodeURIComponent(`Hello Annie's Lodge, I'd like to book: ${room}`);
+  window.open(`https://wa.me/265999957608?text=${msg}`, '_blank');
 }
 
-function bookDemo(site) {
-  window.open(`https://wa.me/265999957608?text=Book ${site} room`);
-}
-
+/* ── ERP Login ── */
 function login() {
-  if(document.getElementById('username').value === 'admin' && document.getElementById('password').value === 'demo') {
-    document.querySelector('.login-form').style.display = 'none';
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  if (u === 'admin' && p === 'demo') {
+    document.getElementById('login-view').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     renderChart();
-  } else alert('Demo: admin/demo');
+  } else {
+    alert('Invalid credentials.\n\nDemo: admin / demo');
+  }
 }
 
-function showTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById(tab + '-tab').classList.add('active');
-}
+/* ── Dashboard Tabs ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(this.dataset.tab + '-tab').classList.add('active');
+    if (this.dataset.tab === 'rep') renderChart();
+  });
+});
 
+/* ── Chart ── */
+let chartInstance = null;
 function renderChart() {
-  const canvas = document.getElementById('chart');
-  const ctx = canvas.getContext('2d');
-  new Chart(ctx, {
-    type: 'doughnut',
+  const ctx = document.getElementById('chart').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
     data: {
-      labels: ['Rooms Occupied', 'Available'],
-      datasets: [{data: [72, 28], backgroundColor: ['#28a745', '#6c757d']}]
+      labels: ['Zomba HQ', 'Lilongwe', 'Blantyre', 'Cape Maclear'],
+      datasets: [{
+        label: 'Occupancy %',
+        data: [78, 65, 82, 55],
+        backgroundColor: ['#005e20cc','#1a8a3acc','#c8960ccc','#25D366cc'],
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
     },
-    options: {cutout: '60%'}
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, title: { display: true, text: 'Occupancy by Site – April 2026', font: { size: 14 } } },
+      scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
+    }
   });
 }
 
+/* ── Reports ── */
 function generateQuote() {
-  alert('Quote PDF generated - Print ready!');
+  alert('Quote generated! Printing…');
   window.print();
 }
 
-function printDemo() {
-  alert('Invoice printed');
-}
-
-function renderInvoices() {
-  // Static for demo
-}
-
-// WhatsApp
+/* ── Enter key on login ── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('password')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+});
 </script>
 </body>
-</html>"
-  
+</html>
