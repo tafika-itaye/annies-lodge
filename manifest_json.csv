@@ -1,4 +1,5 @@
-{
+file,contents
+manifest.json,"{
   ""name"": ""Annie\'s Lodge ERP Portal"",
   ""short_name"": ""AnnieERP"",
   ""icons"": [
@@ -12,5 +13,4 @@
   ""display"": ""standalone"",
   ""theme_color"": ""#006400"",
   ""background_color"": ""#f5f5dc""
-}
-
+}"
