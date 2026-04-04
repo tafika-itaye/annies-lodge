@@ -1,635 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Annie's Lodge Malawi – Multi-Site ERP & Booking</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Annie's Lodge Malawi | ERP & PMS Demo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* ── Reset & Variables ── */
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --forest: #005e20;
-      --forest-light: #1a8a3a;
-      --gold: #c8960c;
-      --gold-light: #f0b429;
-      --cream: #faf7f0;
-      --warm-gray: #f2ede4;
-      --text: #1a1a1a;
-      --text-muted: #6b6b6b;
-      --white: #ffffff;
-      --shadow-sm: 0 2px 12px rgba(0,0,0,0.08);
-      --shadow-md: 0 8px 32px rgba(0,0,0,0.12);
-      --shadow-lg: 0 20px 60px rgba(0,0,0,0.18);
-      --radius: 16px;
-      --radius-sm: 10px;
-    }
-    html { scroll-behavior: smooth; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; overflow-x: hidden; }
-
-    /* ── Splash Screen ── */
-    #splash {
-      position: fixed; inset: 0; z-index: 9999;
-      background: linear-gradient(160deg, #003d14 0%, #005e20 50%, #007a28 100%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 1.5rem; transition: opacity 0.6s ease, visibility 0.6s ease;
-    }
-    #splash.hidden { opacity: 0; visibility: hidden; }
-    .splash-logo { height: 90px; filter: brightness(0) invert(1) drop-shadow(0 6px 20px rgba(0,0,0,0.4)); }
-    .splash-title { font-family: 'Playfair Display', serif; color: white; font-size: 1.6rem; letter-spacing: 0.04em; }
-    .splash-sub { color: rgba(255,255,255,0.6); font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
-    .loader {
-      width: 44px; height: 44px;
-      border: 3px solid rgba(255,255,255,0.15);
-      border-top-color: var(--gold-light);
-      border-radius: 50%; animation: spin 0.9s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Header ── */
-    header {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(255,255,255,0.92); backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(0,0,0,0.07);
-      padding: 0.75rem 2rem;
-      display: flex; align-items: center; gap: 1.5rem;
-    }
-    .logo { height: 42px; object-fit: contain; }
-    .logo-text { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--forest); line-height: 1.2; }
-    .logo-text span { display: block; font-size: 0.7rem; font-family: 'DM Sans', sans-serif; font-weight: 400; color: var(--text-muted); letter-spacing: 0.06em; }
-    nav { margin-left: auto; display: flex; gap: 0.5rem; }
-    .nav-btn {
-      background: none; border: 1.5px solid #ddd;
-      padding: 0.5rem 1.25rem; border-radius: 50px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
-      cursor: pointer; transition: all 0.25s ease; color: var(--text-muted); white-space: nowrap;
-    }
-    .nav-btn:hover, .nav-btn.active {
-      background: var(--forest); color: white; border-color: var(--forest);
-    }
-
-    /* ── Sections ── */
-    .section { display: none; min-height: 100vh; animation: fadeUp 0.5s ease both; }
-    .section.active { display: block; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* ── Hero ── */
-    .hero {
-      min-height: 62vh;
-      background: linear-gradient(to bottom, rgba(0,30,10,0.55) 0%, rgba(0,20,6,0.72) 100%),
-                  url('images/hero-bg.jpg') center/cover no-repeat;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; padding: 4rem 2rem; color: white;
-    }
-    .hero-eyebrow { font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 1rem; }
-    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.15; margin-bottom: 1rem; }
-    .hero p { font-size: 1.1rem; opacity: 0.85; margin-bottom: 2rem; }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--gold), var(--gold-light));
-      color: white; border: none; padding: 0.9rem 2.4rem;
-      border-radius: 50px; font-size: 1rem; font-weight: 600;
-      cursor: pointer; transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(200,150,12,0.45);
-      text-transform: uppercase; letter-spacing: 0.06em;
-    }
-    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(200,150,12,0.55); }
-
-    /* ── Location Cards ── */
-    .locations-section { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
-    .section-title { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--forest); margin-bottom: 0.5rem; }
-    .section-sub { color: var(--text-muted); margin-bottom: 2.5rem; }
-    .locations-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-    .location-card {
-      background: white; border-radius: var(--radius); overflow: hidden;
-      box-shadow: var(--shadow-md); transition: all 0.35s ease;
-      border: 1px solid rgba(0,0,0,0.05);
-    }
-    .location-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
-    .location-card img { width: 100%; height: 200px; object-fit: cover; }
-    .location-card-body { padding: 1.5rem; }
-    .location-card h3 { font-family: 'Playfair Display', serif; color: var(--forest); font-size: 1.25rem; margin-bottom: 0.25rem; }
-    .location-card p { color: var(--text-muted); font-size: 0.9rem; }
-    .badge { display: inline-block; background: var(--warm-gray); color: var(--forest); font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.7rem; border-radius: 20px; margin-top: 0.5rem; }
-
-    /* ── Rooms ── */
-    .rooms-section { padding: 3rem 2rem; max-width: 1300px; margin: 0 auto; }
-    .filter-bar {
-      display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
-      background: white; padding: 1.2rem 1.5rem; border-radius: var(--radius);
-      box-shadow: var(--shadow-sm); margin-bottom: 2rem;
-    }
-    .filter-bar select, .filter-bar input[type="range"] { padding: 0.5rem; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
-    .price-display { font-weight: 600; color: var(--forest); min-width: 4rem; }
-    .btn-whatsapp {
-      margin-left: auto; background: #25D366; color: white; border: none;
-      padding: 0.6rem 1.4rem; border-radius: 50px; font-weight: 600; font-size: 0.9rem;
-      cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.25s;
-    }
-    .btn-whatsapp:hover { background: #1da750; transform: translateY(-2px); }
-    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-    .room-card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); transition: all 0.35s ease; }
-    .room-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); }
-    .room-img { width: 100%; height: 220px; object-fit: cover; display: block; }
-    .room-info { padding: 1.5rem; }
-    .room-site { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; }
-    .room-type { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 0.5rem; }
-    .room-price { font-size: 1.6rem; font-weight: 800; color: var(--gold); margin: 0.5rem 0 1rem; }
-    .room-price span { font-size: 0.85rem; font-weight: 400; color: var(--text-muted); }
-    .room-amenities { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
-    .amenity-tag { background: var(--warm-gray); padding: 0.2rem 0.6rem; border-radius: 20px; }
-    .btn-book { width: 100%; padding: 0.8rem; border-radius: 10px; border: none; background: var(--forest); color: white; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; }
-    .btn-book:hover { background: var(--forest-light); }
-
-    /* ── ERP Portal ── */
-    .portal-section { padding: 3rem 2rem; min-height: 100vh; }
-    .login-card {
-      max-width: 420px; margin: 2rem auto;
-      background: white; padding: 3rem; border-radius: var(--radius);
-      box-shadow: var(--shadow-lg);
-    }
-    .login-card h2 { font-family: 'Playfair Display', serif; color: var(--forest); font-size: 1.8rem; margin-bottom: 0.5rem; }
-    .login-card p { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem; }
-    .form-group { margin-bottom: 1.2rem; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.06em; }
-    .form-group input { width: 100%; padding: 0.85rem 1rem; border: 1.5px solid #ddd; border-radius: 10px; font-size: 1rem; transition: border-color 0.2s; }
-    .form-group input:focus { outline: none; border-color: var(--forest); }
-    .demo-hint { background: var(--warm-gray); padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.83rem; color: var(--text-muted); margin-bottom: 1.5rem; }
-    .btn-login { width: 100%; padding: 1rem; background: var(--forest); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-login:hover { background: var(--forest-light); }
-
-    /* ── Dashboard ── */
-    #dashboard { display: none; padding: 0; }
-    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-    .dash-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--forest); }
-    .dash-date { font-size: 0.85rem; color: var(--text-muted); }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
-    .kpi-card {
-      background: white; padding: 1.5rem; border-radius: var(--radius);
-      box-shadow: var(--shadow-sm); text-align: center; transition: transform 0.25s;
-    }
-    .kpi-card:hover { transform: translateY(-4px); }
-    .kpi-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
-    .kpi-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem; }
-    .kpi-value { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--forest); font-weight: 700; }
-    .kpi-value.gold { color: var(--gold); }
-    .kpi-value.alert { color: #e05c00; }
-
-    .dash-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: var(--warm-gray); padding: 0.4rem; border-radius: 12px; overflow-x: auto; }
-    .tab-btn { background: none; border: none; padding: 0.6rem 1.4rem; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; color: var(--text-muted); white-space: nowrap; }
-    .tab-btn.active { background: white; color: var(--forest); box-shadow: var(--shadow-sm); }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; animation: fadeUp 0.35s ease both; }
-
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
-    thead { background: var(--warm-gray); }
-    th { padding: 1rem 1.2rem; text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700; }
-    td { padding: 1rem 1.2rem; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(0,94,32,0.03); }
-
-    .status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-    .status.confirmed { background: #e6f9ed; color: #1a7a3a; }
-    .status.checked-in { background: #e8f0fe; color: #1a56db; }
-    .status.paid { background: #e6f9ed; color: #1a7a3a; }
-    .status.pending { background: #fff3e0; color: #c05f00; }
-    .stock-low { color: #e05c00; font-weight: 600; }
-
-    .chart-container { background: white; padding: 2rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; }
-    .erp-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
-    .btn-action {
-      padding: 0.75rem 2rem; border-radius: 50px; border: none; font-weight: 600;
-      font-size: 0.9rem; cursor: pointer; transition: all 0.25s;
-      text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    .btn-action.primary { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: white; box-shadow: 0 6px 20px rgba(200,150,12,0.35); }
-    .btn-action.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(200,150,12,0.5); }
-    .btn-action.secondary { background: white; color: var(--forest); border: 1.5px solid var(--forest); }
-    .btn-action.secondary:hover { background: var(--forest); color: white; }
-
-    /* ── Payments ── */
-    .payments-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; }
-    .payment-form {
-      background: white; padding: 2rem; border-radius: var(--radius);
-      box-shadow: var(--shadow-sm); margin-top: 2rem;
-    }
-    .payment-form h3 { font-family: 'Playfair Display', serif; color: var(--forest); margin-bottom: 1.5rem; }
-    .payment-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
-    .payment-row select, .payment-row input[type="number"] {
-      flex: 1; min-width: 150px; padding: 0.8rem 1rem;
-      border: 1.5px solid #ddd; border-radius: 10px; font-size: 1rem;
-    }
-    .btn-pay { padding: 0.8rem 2rem; background: var(--forest); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .btn-pay:hover { background: var(--forest-light); }
-
-    /* ── WhatsApp Float ── */
-    .whatsapp-float {
-      position: fixed; bottom: 24px; right: 24px; z-index: 500;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: linear-gradient(135deg, #25D366, #128C7E);
-      display: flex; align-items: center; justify-content: center;
-      text-decoration: none; box-shadow: 0 8px 28px rgba(37,211,102,0.5);
-      transition: all 0.3s ease; font-size: 1.6rem;
-    }
-    .whatsapp-float:hover { transform: scale(1.12) rotate(6deg); box-shadow: 0 14px 36px rgba(37,211,102,0.65); }
-
-    /* ── Responsive ── */
-    @media (max-width: 700px) {
-      header { padding: 0.75rem 1rem; }
-      .nav-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
-      .hero h1 { font-size: 2rem; }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-      .rooms-grid { grid-template-columns: 1fr; }
-      .login-card { padding: 2rem 1.5rem; }
-    }
-    @media (max-width: 400px) {
-      .kpi-grid { grid-template-columns: 1fr; }
-      nav { gap: 0.25rem; }
-      .nav-btn { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
-    }
-  </style>
 </head>
 <body>
-
-<!-- Splash -->
-<div id="splash">
-  <img src="images/splash-logo.png" alt="Annie's Lodge" class="splash-logo"
-       onerror="this.style.display='none'">
-  <div class="splash-title">Annie's Lodge Malawi</div>
-  <div class="loader"></div>
-  <div class="splash-sub">TechNexus MW · Phase 1</div>
-</div>
-
-<!-- App -->
-<div id="app" style="display:none;">
-  <header>
-    <img src="images/annie-logo.png" alt="Annie's Lodge" class="logo"
-         onerror="this.style.display='none'">
-    <div class="logo-text">Annie's Lodge <span>Malawi · Multi-Site ERP</span></div>
-    <nav>
-      <button class="nav-btn active" data-section="home">Home</button>
-      <button class="nav-btn" data-section="rooms">Rooms</button>
-      <button class="nav-btn" data-section="portal">ERP Portal</button>
-      <button class="nav-btn" data-section="payments">Payments</button>
-    </nav>
-  </header>
-
-  <!-- HOME -->
-  <section id="home" class="section active">
-    <div class="hero">
-      <div class="hero-eyebrow">Malawi's Premier Lodge Network</div>
+  <div id="splash-screen" class="splash-screen active">
+    <div class="splash-card">
+      <div class="brand-mark">AL</div>
       <h1>Annie's Lodge</h1>
-      <p>Lilongwe · Zomba · Blantyre · Cape Maclear</p>
-      <button class="btn-primary" onclick="showSection('rooms')">Book a Room</button>
+      <p>Hospitality ERP & PMS Demo</p>
     </div>
-    <div class="locations-section">
-      <div class="section-title">Our Locations</div>
-      <p class="section-sub">Four distinct properties across Malawi's most vibrant cities</p>
-      <div class="locations-grid">
-        <div class="location-card">
-          <img src="images/map-zomba.png" alt="Zomba" onerror="this.src=''; this.style.height='140px'; this.style.background='#e8f4e8';">
-          <div class="location-card-body">
-            <h3>Zomba HQ</h3>
-            <p>Our flagship property in the historic capital</p>
-            <div class="badge">34 Rooms</div>
-          </div>
-        </div>
-        <div class="location-card">
-          <img src="images/map-lilongwe.png" alt="Lilongwe" onerror="this.src=''; this.style.height='140px'; this.style.background='#e8f4e8';">
-          <div class="location-card-body">
-            <h3>Lilongwe Area 10</h3>
-            <p>Business hub location near the city centre</p>
-            <div class="badge">Executive Suites</div>
-          </div>
-        </div>
-        <div class="location-card">
-          <img src="images/map-blantyre.png" alt="Blantyre" onerror="this.src=''; this.style.height='140px'; this.style.background='#e8f4e8';">
-          <div class="location-card-body">
-            <h3>Blantyre Nyambadwe</h3>
-            <p>Commercial capital with mountain views</p>
-            <div class="badge">Luxury Rooms</div>
-          </div>
-        </div>
-        <div class="location-card">
-          <img src="images/capemaclear_lake.jpg" alt="Cape Maclear" onerror="this.src=''; this.style.height='140px'; this.style.background='#d4ecf7';">
-          <div class="location-card-body">
-            <h3>Cape Maclear</h3>
-            <p>Lake Malawi lakefront escape</p>
-            <div class="badge">Lake View</div>
-          </div>
-        </div>
+  </div>
+
+  <main class="app-shell">
+    <section id="login-screen" class="login-screen active">
+      <div class="login-card card">
+        <div class="section-tag">Demo Access</div>
+        <h2>Welcome back</h2>
+        <p>Use <strong>admin</strong> / <strong>demo</strong> to access the dashboard.</p>
+        <form id="login-form" class="login-form">
+          <label>
+            Username
+            <input type="text" id="username" value="admin" required />
+          </label>
+          <label>
+            Password
+            <input type="password" id="password" value="demo" required />
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Login</button>
+          <p id="login-message" class="helper-text"></p>
+        </form>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ROOMS -->
-  <section id="rooms" class="section">
-    <div class="rooms-section">
-      <div class="section-title">Available Rooms</div>
-      <p class="section-sub">Filter by location and budget</p>
-      <div class="filter-bar">
-        <select id="site-filter" onchange="filterRooms()">
-          <option value="">All Sites</option>
-          <option value="Zomba HQ">Zomba HQ</option>
-          <option value="Lilongwe Area 10">Lilongwe Area 10</option>
-          <option value="Blantyre Nyambadwe">Blantyre Nyambadwe</option>
-          <option value="Cape Maclear">Cape Maclear</option>
-        </select>
-        <label style="font-size:0.85rem;color:#666;">Max price:</label>
-        <input type="range" id="price-filter" min="30" max="150" value="150" oninput="filterRooms()">
-        <span class="price-display" id="price-value">$150</span>
-        <button class="btn-whatsapp" onclick="openWhatsApp('all')">
-          📱 WhatsApp Book
-        </button>
-      </div>
-      <div class="rooms-grid" id="rooms-grid"></div>
-    </div>
-  </section>
-
-  <!-- ERP PORTAL -->
-  <section id="portal" class="section">
-    <div class="portal-section">
-      <div id="login-view">
-        <div class="login-card">
-          <h2>ERP Portal</h2>
-          <p>Sign in to access the TechNexus MW dashboard</p>
-          <div class="demo-hint">🔑 Demo credentials: <strong>admin</strong> / <strong>demo</strong></div>
-          <div class="form-group">
-            <label>Username</label>
-            <input id="username" type="text" placeholder="Enter username" value="admin">
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <input id="password" type="password" placeholder="Enter password" value="demo">
-          </div>
-          <button class="btn-login" onclick="login()">Sign In →</button>
+    <section id="app-content" class="hidden">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Annie's Lodge Malawi</p>
+          <h1>ERP & PMS Simulator</h1>
         </div>
-      </div>
-
-      <div id="dashboard" style="display:none;">
-        <div class="dash-header">
-          <h2>Dashboard – TechNexus MW</h2>
-          <div class="dash-date" id="dash-date"></div>
+        <div class="topbar-actions">
+          <span class="pill success">Offline-ready demo</span>
+          <button id="logout-btn" class="btn btn-secondary">Logout</button>
         </div>
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-icon">🏨</div>
-            <div class="kpi-label">Occupancy</div>
-            <div class="kpi-value">72%</div>
+      </header>
+
+      <section class="hero card hero-card">
+        <div>
+          <p class="section-tag">Multi-property operations</p>
+          <h2>Zomba, Lilongwe & Blantyre in one dashboard</h2>
+          <p>Manage rooms, reservations, housekeeping, restaurant orders, bar tabs, and simple financial reporting from a single-page demo app.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="metric-mini">
+            <span>Sites</span>
+            <strong>3</strong>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-icon">💵</div>
-            <div class="kpi-label">Revenue Today</div>
-            <div class="kpi-value gold">$2,450</div>
+          <div class="metric-mini">
+            <span>Bars</span>
+            <strong>2</strong>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-icon">⚠️</div>
-            <div class="kpi-label">F&amp;B Alerts</div>
-            <div class="kpi-value alert">2</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon">🔑</div>
-            <div class="kpi-label">Pending Check-ins</div>
-            <div class="kpi-value">3</div>
+          <div class="metric-mini">
+            <span>POS</span>
+            <strong>Live Demo</strong>
           </div>
         </div>
+      </section>
 
-        <div class="dash-tabs">
-          <button class="tab-btn active" data-tab="res">Reservations</button>
-          <button class="tab-btn" data-tab="inv">Inventory</button>
-          <button class="tab-btn" data-tab="rep">Reports</button>
-        </div>
-
-        <!-- Reservations Tab -->
-        <div id="res-tab" class="tab-panel active">
-          <table>
-            <thead>
-              <tr><th>Site</th><th>Guest</th><th>Room</th><th>Check-in</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Zomba HQ</td><td>John Doe</td><td>Z001</td><td>03 Apr 2026</td><td><span class="status confirmed">Confirmed</span></td></tr>
-              <tr><td>Lilongwe</td><td>Jane Smith</td><td>L002</td><td>02 Apr 2026</td><td><span class="status checked-in">Checked In</span></td></tr>
-              <tr><td>Blantyre</td><td>M. Phiri</td><td>B005</td><td>04 Apr 2026</td><td><span class="status confirmed">Confirmed</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Inventory Tab -->
-        <div id="inv-tab" class="tab-panel">
-          <table>
-            <thead>
-              <tr><th>Item</th><th>Category</th><th>Stock</th><th>Reorder Level</th><th>Price MWK</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Stella Lager</td><td>Beer</td><td>120</td><td>50</td><td>1,500</td></tr>
-              <tr><td>Heineken</td><td>Beer</td><td><span class="stock-low">24 ⚠️</span></td><td>50</td><td>1,600</td></tr>
-              <tr><td>Chicken Peri Peri</td><td>Food</td><td>18</td><td>10</td><td>8,500</td></tr>
-              <tr><td>Nsima &amp; Relish</td><td>Food</td><td>Daily</td><td>—</td><td>3,200</td></tr>
-              <tr><td>Red Wine</td><td>Drinks</td><td><span class="stock-low">6 ⚠️</span></td><td>12</td><td>12,000</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Reports Tab -->
-        <div id="rep-tab" class="tab-panel">
-          <div class="chart-container">
-            <canvas id="chart" style="max-height:300px;"></canvas>
-          </div>
-          <div class="erp-actions">
-            <button class="btn-action primary" onclick="generateQuote()">📄 Generate Quote</button>
-            <button class="btn-action secondary" onclick="window.print()">🖨 Print Invoice</button>
+      <section class="rooms-preview">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Rooms</p>
+            <h2>Property inventory</h2>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
+        <div id="rooms-grid" class="rooms-grid"></div>
+      </section>
 
-  <!-- PAYMENTS -->
-  <section id="payments" class="section">
-    <div class="payments-section">
-      <div class="section-title">Payments Dashboard</div>
-      <p class="section-sub">Track invoices and process mobile money payments</p>
-      <table style="margin-top:1.5rem;">
-        <thead>
-          <tr><th>Invoice</th><th>Guest</th><th>Amount</th><th>Status</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>INV001</td><td>John Doe</td><td>45,000 MWK</td>
-            <td><span class="status paid">Paid</span></td>
-            <td><button class="btn-action secondary" style="padding:0.4rem 1rem;font-size:0.8rem;" onclick="alert('Downloading receipt…')">📥 Receipt</button></td>
-          </tr>
-          <tr>
-            <td>INV002</td><td>Jane Smith</td><td>130,000 MWK</td>
-            <td><span class="status pending">Pending</span></td>
-            <td><button class="btn-action primary" style="padding:0.4rem 1rem;font-size:0.8rem;" onclick="alert('Redirecting to payment…')">💳 Pay Now</button></td>
-          </tr>
-          <tr>
-            <td>INV003</td><td>M. Phiri</td><td>78,500 MWK</td>
-            <td><span class="status pending">Pending</span></td>
-            <td><button class="btn-action primary" style="padding:0.4rem 1rem;font-size:0.8rem;" onclick="alert('Redirecting to payment…')">💳 Pay Now</button></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="payment-form">
-        <h3>Pay via Mobile Money</h3>
-        <div class="payment-row">
-          <select>
-            <option>Airtel Money</option>
-            <option>TNM Mpamba</option>
-          </select>
-          <input type="number" placeholder="Amount (MWK)" min="0" step="500">
-          <input type="text" placeholder="Phone number" style="flex:1;min-width:150px;padding:0.8rem 1rem;border:1.5px solid #ddd;border-radius:10px;font-size:1rem;">
-          <button class="btn-pay" onclick="alert('Payment initiated! Check your phone for confirmation.')">Pay Now</button>
+      <section class="dashboard card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ERP dashboard</p>
+            <h2>Operations center</h2>
+          </div>
+          <button id="download-csv-btn" class="btn btn-secondary">Download CSV</button>
         </div>
-      </div>
-    </div>
-  </section>
 
-</div><!-- /app -->
+        <div class="dashboard-tabs">
+          <button class="tab-btn active" data-tab="overview">Overview</button>
+          <button class="tab-btn" data-tab="reservations">Reservations</button>
+          <button class="tab-btn" data-tab="restaurant">Restaurant</button>
+          <button class="tab-btn" data-tab="bars">Bars</button>
+          <button class="tab-btn" data-tab="reports">Reports</button>
+          <button class="tab-btn" data-tab="payments">Payments</button>
+        </div>
 
-<!-- WhatsApp Float -->
-<a href="https://wa.me/265999957608?text=Hello%20Annie%27s%20Lodge%2C%20I%27d%20like%20to%20make%20a%20booking"
-   class="whatsapp-float" target="_blank" rel="noopener" title="Chat with us on WhatsApp">
-  📱
-</a>
+        <div class="tab-panels">
+          <section class="tab-panel active" id="tab-overview">
+            <div class="kpi-grid" id="kpi-grid"></div>
+            <div class="overview-grid">
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Occupancy trend</h3>
+                </div>
+                <canvas id="occupancyChart" height="140"></canvas>
+              </div>
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Housekeeping</h3>
+                  <span class="pill warning">Tap to update</span>
+                </div>
+                <div id="housekeeping-widget" class="housekeeping-widget"></div>
+              </div>
+            </div>
+          </section>
 
-<script>
-/* ── Data ── */
-const ROOMS = [
-  { site: "Zomba HQ",         type: "Standard Single",  rate: 45,  img: "zomba_standard_single.jpg", amenities: ["WiFi","Breakfast","Parking"] },
-  { site: "Zomba HQ",         type: "Double Room",      rate: 65,  img: "zomba_double.jpg",           amenities: ["WiFi","Breakfast","AC"] },
-  { site: "Zomba HQ",         type: "Deluxe Suite",     rate: 90,  img: "zomba_deluxe.jpg",           amenities: ["WiFi","Breakfast","AC","Pool"] },
-  { site: "Zomba HQ",         type: "Conference Suite", rate: 120, img: "zomba_conf_suite.jpg",       amenities: ["WiFi","Projector","Catering"] },
-  { site: "Lilongwe Area 10", type: "Executive Single", rate: 55,  img: "lilongwe_single.jpg",        amenities: ["WiFi","Breakfast","AC"] },
-  { site: "Lilongwe Area 10", type: "Executive Double", rate: 75,  img: "lilongwe_exec.jpg",          amenities: ["WiFi","Breakfast","AC","Gym"] },
-  { site: "Lilongwe Area 10", type: "Family Room",      rate: 95,  img: "lilongwe_family.jpg",        amenities: ["WiFi","Breakfast","AC","2 Beds"] },
-  { site: "Blantyre Nyambadwe","type":"Double Room",    rate: 70,  img: "blantyre_double.jpg",        amenities: ["WiFi","Breakfast","City View"] },
-  { site: "Blantyre Nyambadwe","type":"Luxury Suite",   rate: 130, img: "blantyre_luxury.jpg",        amenities: ["WiFi","Breakfast","AC","Spa"] },
-  { site: "Cape Maclear",     type: "Lake View Chalet", rate: 70,  img: "capemaclear_lake.jpg",       amenities: ["WiFi","Breakfast","Lake View"] },
-  { site: "Cape Maclear",     type: "Beach Bungalow",   rate: 85,  img: "capemaclear_beach.jpg",      amenities: ["WiFi","Breakfast","Beach Access"] },
-];
+          <section class="tab-panel" id="tab-reservations">
+            <div class="filter-row">
+              <label>
+                Site
+                <select id="reservation-site-filter"></select>
+              </label>
+              <label>
+                Status
+                <select id="reservation-status-filter"></select>
+              </label>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Guest</th>
+                    <th>Site</th>
+                    <th>Room</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Status</th>
+                    <th>Board</th>
+                    <th>Charge</th>
+                  </tr>
+                </thead>
+                <tbody id="reservations-body"></tbody>
+              </table>
+            </div>
+          </section>
 
-/* ── Splash ── */
-setTimeout(() => {
-  document.getElementById('splash').classList.add('hidden');
-  document.getElementById('app').style.display = 'block';
-}, 2400);
+          <section class="tab-panel" id="tab-restaurant">
+            <div class="pos-layout">
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Restaurant POS</h3>
+                  <span class="pill">Table service</span>
+                </div>
+                <div class="filter-row three-up">
+                  <label>
+                    Site
+                    <select id="restaurant-site"></select>
+                  </label>
+                  <label>
+                    Table
+                    <select id="restaurant-table"></select>
+                  </label>
+                  <label>
+                    Room (opt.)
+                    <select id="restaurant-room"></select>
+                  </label>
+                </div>
+                <div id="restaurant-menu-groups" class="menu-groups"></div>
+              </div>
 
-/* ── Navigation ── */
-document.querySelectorAll('.nav-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    showSection(this.dataset.section);
-  });
-});
+              <aside class="card inset-card order-sidebar">
+                <div class="section-heading compact">
+                  <h3>Current Order</h3>
+                  <button id="clear-restaurant-order" class="btn btn-ghost btn-small">Clear</button>
+                </div>
+                <div id="restaurant-order-items" class="order-items empty-state-mini">No items yet.</div>
+                <div class="totals-box">
+                  <div><span>Subtotal</span><strong id="restaurant-subtotal">MWK 0</strong></div>
+                  <div><span>Tax (16.5%)</span><strong id="restaurant-tax">MWK 0</strong></div>
+                  <div class="grand-total"><span>Total</span><strong id="restaurant-total">MWK 0</strong></div>
+                </div>
+                <div class="stack-actions">
+                  <button id="send-kitchen-btn" class="btn btn-primary btn-block">Send to Kitchen</button>
+                  <button id="close-pay-restaurant-btn" class="btn btn-secondary btn-block">Close &amp; Pay</button>
+                </div>
+              </aside>
+            </div>
 
-function showSection(id) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelector(`.nav-btn[data-section="${id}"]`).classList.add('active');
-  if (id === 'rooms') renderRooms();
-}
+            <div class="card inset-card kitchen-card">
+              <div class="section-heading compact">
+                <h3>Kitchen View</h3>
+                <span class="pill success">Open orders</span>
+              </div>
+              <div id="kitchen-orders" class="kitchen-orders"></div>
+            </div>
+          </section>
 
-/* ── Rooms ── */
-function renderRooms(filtered) {
-  const rooms = filtered || ROOMS;
-  const grid = document.getElementById('rooms-grid');
-  if (!rooms.length) { grid.innerHTML = '<p style="color:#999;text-align:center;padding:3rem;">No rooms match your filters.</p>'; return; }
-  grid.innerHTML = rooms.map(r => `
-    <div class="room-card">
-      <img src="images/${r.img}" class="room-img" alt="${r.type}"
-           onerror="this.style.background='#e8f4e8';this.style.height='180px';this.src='';">
-      <div class="room-info">
-        <div class="room-site">${r.site}</div>
-        <div class="room-type">${r.type}</div>
-        <div class="room-price">$${r.rate} <span>/ night</span></div>
-        <div class="room-amenities">${r.amenities.map(a => `<span class="amenity-tag">${a}</span>`).join('')}</div>
-        <button class="btn-book" onclick="openWhatsApp('${r.site} – ${r.type}')">Book via WhatsApp</button>
-      </div>
-    </div>
-  `).join('');
-}
+          <section class="tab-panel" id="tab-bars">
+            <div class="pos-layout">
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Bar POS</h3>
+                  <span class="pill">Quick serve</span>
+                </div>
+                <div class="filter-row two-up">
+                  <label>
+                    Bar
+                    <select id="bar-selector"></select>
+                  </label>
+                  <label>
+                    Bartender tab name
+                    <input id="bar-tab-name" type="text" placeholder="Walk-in / Room guest" />
+                  </label>
+                </div>
+                <div id="bar-menu-buttons" class="quick-buttons"></div>
+              </div>
 
-function filterRooms() {
-  const site = document.getElementById('site-filter').value;
-  const maxPrice = parseInt(document.getElementById('price-filter').value);
-  document.getElementById('price-value').textContent = '$' + maxPrice;
-  const filtered = ROOMS.filter(r =>
-    (!site || r.site === site) && r.rate <= maxPrice
-  );
-  renderRooms(filtered);
-}
+              <aside class="card inset-card order-sidebar">
+                <div class="section-heading compact">
+                  <h3>Running Tab</h3>
+                  <button id="clear-bar-order" class="btn btn-ghost btn-small">Clear</button>
+                </div>
+                <div id="bar-order-items" class="order-items empty-state-mini">No drinks added.</div>
+                <div class="totals-box">
+                  <div class="grand-total"><span>Total</span><strong id="bar-total">MWK 0</strong></div>
+                </div>
+                <div class="stack-actions">
+                  <button id="close-bar-tab-btn" class="btn btn-primary btn-block">Close Tab</button>
+                </div>
+              </aside>
+            </div>
 
-function openWhatsApp(room) {
-  const msg = encodeURIComponent(`Hello Annie's Lodge, I'd like to book: ${room}`);
-  window.open(`https://wa.me/265999957608?text=${msg}`, '_blank');
-}
+            <div class="inventory-grid">
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Bar stock</h3>
+                </div>
+                <div id="bar-stock-view" class="stock-list"></div>
+              </div>
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Recent bar sales</h3>
+                </div>
+                <div id="bar-sales-list" class="sales-list"></div>
+              </div>
+            </div>
+          </section>
 
-/* ── ERP Login ── */
-function login() {
-  const u = document.getElementById('username').value;
-  const p = document.getElementById('password').value;
-  if (u === 'admin' && p === 'demo') {
-    document.getElementById('login-view').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    renderChart();
-  } else {
-    alert('Invalid credentials.\n\nDemo: admin / demo');
-  }
-}
+          <section class="tab-panel" id="tab-reports">
+            <div class="report-cards" id="daily-revenue-summary"></div>
+            <div class="overview-grid reports-grid">
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Department revenue</h3>
+                </div>
+                <canvas id="revenueDeptChart" height="160"></canvas>
+              </div>
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Bar comparison</h3>
+                </div>
+                <canvas id="barRevenueChart" height="160"></canvas>
+              </div>
+            </div>
+            <div class="card inset-card pnl-card" id="pnl-view"></div>
+          </section>
 
-/* ── Dashboard Tabs ── */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    this.classList.add('active');
-    document.getElementById(this.dataset.tab + '-tab').classList.add('active');
-    if (this.dataset.tab === 'rep') renderChart();
-  });
-});
+          <section class="tab-panel" id="tab-payments">
+            <div class="payment-grid">
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Payment channels</h3>
+                </div>
+                <div class="simple-list">
+                  <div><span>Cash</span><strong>Enabled</strong></div>
+                  <div><span>Airtel Money</span><strong>Enabled</strong></div>
+                  <div><span>TNM Mpamba</span><strong>Enabled</strong></div>
+                  <div><span>Card</span><strong>Demo</strong></div>
+                </div>
+              </div>
+              <div class="card inset-card">
+                <div class="section-heading compact">
+                  <h3>Settlement note</h3>
+                </div>
+                <p class="helper-block">This phase runs fully in-browser with demo transactions only. Sales and stock updates are stored in memory while housekeeping state is saved locally for offline continuity.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </section>
+  </main>
 
-/* ── Chart ── */
-let chartInstance = null;
-function renderChart() {
-  const ctx = document.getElementById('chart').getContext('2d');
-  if (chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Zomba HQ', 'Lilongwe', 'Blantyre', 'Cape Maclear'],
-      datasets: [{
-        label: 'Occupancy %',
-        data: [78, 65, 82, 55],
-        backgroundColor: ['#005e20cc','#1a8a3acc','#c8960ccc','#25D366cc'],
-        borderRadius: 8,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false }, title: { display: true, text: 'Occupancy by Site – April 2026', font: { size: 14 } } },
-      scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
-    }
-  });
-}
-
-/* ── Reports ── */
-function generateQuote() {
-  alert('Quote generated! Printing…');
-  window.print();
-}
-
-/* ── Enter key on login ── */
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('password')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') login();
-  });
-});
-</script>
+  <script src="js/app.js"></script>
 </body>
 </html>
