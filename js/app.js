@@ -1,5 +1,21 @@
+'use strict';
+
 const TODAY = '2026-04-04';
 const EVENTS_REVENUE = 125000;
+const TAX_RATE = 0.165;
+const HOUSEKEEPING_KEY = 'annies_housekeeping_v2';
+const SPLASH_MS = 1800;
+
+const IMAGE_BASE = './images/';
+const roomImageCandidates = {
+  Z001: ['zomba_standard_single.jpg', 'room1.jpg', 'standard-single.jpg'],
+  Z002: ['zomba_standard_double.jpg', 'room2.jpg', 'standard-double.jpg'],
+  Z003: ['zomba_exec_suite.jpg', 'suite.jpg', 'executive-suite.jpg'],
+  L101: ['llw_standard_single.jpg', 'room3.jpg', 'lilongwe-single.jpg'],
+  L102: ['llw_deluxe_double.jpg', 'room4.jpg', 'deluxe-double.jpg'],
+  B201: ['bty_twin.jpg', 'room5.jpg', 'twin-room.jpg'],
+  B202: ['bty_family.jpg', 'room6.jpg', 'family-room.jpg']
+};
 
 const ROOMS = [
   {site: 'Zomba HQ', room_id: 'Z001', type: 'Standard Single', rate: 45, max_occupancy: 1, board: 'BB', amenities: 'En-suite, WiFi, DSTV, Fan', img: 'zomba_standard_single.jpg'},
@@ -57,26 +73,8 @@ const SALES = [
 ];
 
 const BAR_STORES = [
-  {
-    bar_id: 'BAR1', site: 'Zomba HQ', name: 'Main Bar',
-    items: [
-      {id: 'B001', name: 'Stella Lager', stock: 36},
-      {id: 'B002', name: 'Carlsberg Green', stock: 44},
-      {id: 'B003', name: 'Coke 300ml', stock: 30},
-      {id: 'B006', name: 'Savanna Dry', stock: 24},
-      {id: 'B007', name: 'House Wine Glass', stock: 18}
-    ]
-  },
-  {
-    bar_id: 'BAR2', site: 'Blantyre Nyambadwe', name: 'Lounge Bar',
-    items: [
-      {id: 'B001', name: 'Stella Lager', stock: 28},
-      {id: 'B004', name: 'Sprite 300ml', stock: 34},
-      {id: 'B005', name: 'Water 500ml', stock: 40},
-      {id: 'B006', name: 'Savanna Dry', stock: 20},
-      {id: 'B007', name: 'House Wine Glass', stock: 15}
-    ]
-  }
+  {bar_id: 'BAR1', site: 'Zomba HQ', name: 'Main Bar', items: [{id: 'B001', name: 'Stella Lager', stock: 36},{id: 'B002', name: 'Carlsberg Green', stock: 44},{id: 'B003', name: 'Coke 300ml', stock: 30},{id: 'B006', name: 'Savanna Dry', stock: 24},{id: 'B007', name: 'House Wine Glass', stock: 18}]},
+  {bar_id: 'BAR2', site: 'Blantyre Nyambadwe', name: 'Lounge Bar', items: [{id: 'B001', name: 'Stella Lager', stock: 28},{id: 'B004', name: 'Sprite 300ml', stock: 34},{id: 'B005', name: 'Water 500ml', stock: 40},{id: 'B006', name: 'Savanna Dry', stock: 20},{id: 'B007', name: 'House Wine Glass', stock: 15}]}
 ];
 
 const BAR_SALES = [
@@ -84,63 +82,82 @@ const BAR_SALES = [
   {id: 'BS002', date: TODAY, bar_id: 'BAR2', site: 'Blantyre Nyambadwe', dept: 'Bars', revenue: 9800, items: 6}
 ];
 
-const HOUSEKEEPING_STORAGE_KEY = 'annies_housekeeping';
 const defaultHousekeeping = Object.fromEntries(ROOMS.map((room, index) => [room.room_id, ['Clean', 'Dirty', 'Maintenance'][index % 3]]));
 let housekeepingState = loadHousekeeping();
 let restaurantOrder = [];
 let barOrder = [];
-let occupancyChart;
-let revenueDeptChart;
-let barRevenueChart;
+let occupancyChart = null;
+let revenueDeptChart = null;
+let barRevenueChart = null;
+
+function byId(id) { return document.getElementById(id); }
+function uid(prefix) { return `${prefix}${Math.random().toString(36).slice(2, 7).toUpperCase()}`; }
+function money(value, code = 'MWK') { return `${code} ${Number(value).toLocaleString()}`; }
+function usd(value) { return `$${Number(value).toLocaleString()}`; }
+function nowTime() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+function safeAlert(message) { window.alert(message); }
 
 function loadHousekeeping() {
   try {
-    const saved = localStorage.getItem(HOUSEKEEPING_STORAGE_KEY);
-    return saved ? {...defaultHousekeeping, ...JSON.parse(saved)} : {...defaultHousekeeping};
+    const raw = window.localStorage.getItem(HOUSEKEEPING_KEY);
+    return raw ? { ...defaultHousekeeping, ...JSON.parse(raw) } : { ...defaultHousekeeping };
   } catch (error) {
-    return {...defaultHousekeeping};
+    return { ...defaultHousekeeping };
   }
 }
 
 function saveHousekeeping() {
-  try { localStorage.setItem(HOUSEKEEPING_STORAGE_KEY, JSON.stringify(housekeepingState)); } catch (error) {}
+  try {
+    window.localStorage.setItem(HOUSEKEEPING_KEY, JSON.stringify(housekeepingState));
+  } catch (error) {}
 }
 
-function currency(value, prefix = 'MWK') {
-  return `${prefix} ${Number(value).toLocaleString()}`;
+function resolveRoomImage(room) {
+  const candidates = [room.img, ...(roomImageCandidates[room.room_id] || [])].filter(Boolean);
+  return candidates.map(name => `${IMAGE_BASE}${name}`);
 }
 
-function usd(value) {
-  return `$${Number(value).toLocaleString()}`;
+function createRoomImageMarkup(room) {
+  const sources = resolveRoomImage(room);
+  const primary = sources[0] || '';
+  const fallbackJson = encodeURIComponent(JSON.stringify(sources.slice(1)));
+  return `
+    <div class="room-image-wrap">
+      <img src="${primary}" alt="${room.type} at ${room.site}" loading="lazy" data-fallbacks="${fallbackJson}" onerror="handleRoomImageError(this)">
+      <span class="room-badge">${room.site}</span>
+    </div>
+  `;
 }
 
-function byId(id) { return document.getElementById(id); }
-function nowTime() { return new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}); }
-function uid(prefix) { return `${prefix}${Math.random().toString(36).slice(2, 7).toUpperCase()}`; }
+window.handleRoomImageError = function(img) {
+  try {
+    const fallbacks = JSON.parse(decodeURIComponent(img.dataset.fallbacks || '[]'));
+    if (fallbacks.length) {
+      img.dataset.fallbacks = encodeURIComponent(JSON.stringify(fallbacks.slice(1)));
+      img.src = fallbacks[0];
+      return;
+    }
+  } catch (error) {}
 
-function initApp() {
-  setTimeout(() => byId('splash-screen').classList.remove('active'), 900);
-  bindLogin();
-  renderRooms();
-  renderTabSwitching();
-  initSelectors();
-  renderReservations();
-  renderHousekeeping();
-  renderRestaurantMenu();
-  renderRestaurantOrder();
-  renderKitchenOrders();
-  renderBarSelectors();
-  renderBarMenu();
-  renderBarOrder();
-  renderBarStock();
-  renderBarSales();
-  renderKPIs();
-  renderReports();
-  bindActions();
+  const wrap = img.closest('.room-image-wrap');
+  if (!wrap) return;
+  const roomName = img.alt || 'Room image';
+  wrap.innerHTML = `<div class="room-fallback">${roomName}</div><span class="room-badge">Preview</span>`;
+};
+
+function initSplash() {
+  const splash = byId('splash-screen');
+  if (!splash) return;
+  const hideSplash = () => splash.classList.add('hidden-splash');
+  window.setTimeout(hideSplash, SPLASH_MS);
+  window.addEventListener('load', () => window.setTimeout(hideSplash, 250));
+  document.addEventListener('click', hideSplash, { once: true });
 }
 
-function bindLogin() {
-  byId('login-form').addEventListener('submit', (event) => {
+function initLogin() {
+  const form = byId('login-form');
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     const user = byId('username').value.trim();
     const pass = byId('password').value.trim();
@@ -148,62 +165,66 @@ function bindLogin() {
       byId('login-screen').classList.remove('active');
       byId('app-content').classList.remove('hidden');
       byId('login-message').textContent = '';
-      renderCharts();
+      renderAll();
     } else {
       byId('login-message').textContent = 'Invalid credentials. Use admin / demo.';
     }
   });
-}
 
-function bindActions() {
   byId('logout-btn').addEventListener('click', () => {
     byId('app-content').classList.add('hidden');
     byId('login-screen').classList.add('active');
   });
-
-  byId('reservation-site-filter').addEventListener('change', renderReservations);
-  byId('reservation-status-filter').addEventListener('change', renderReservations);
-
-  byId('clear-restaurant-order').addEventListener('click', () => {
-    restaurantOrder = [];
-    renderRestaurantOrder();
-  });
-
-  byId('send-kitchen-btn').addEventListener('click', sendToKitchen);
-  byId('close-pay-restaurant-btn').addEventListener('click', closeRestaurantOrder);
-
-  byId('bar-selector').addEventListener('change', () => {
-    renderBarMenu();
-    renderBarStock();
-  });
-
-  byId('clear-bar-order').addEventListener('click', () => {
-    barOrder = [];
-    renderBarOrder();
-  });
-
-  byId('close-bar-tab-btn').addEventListener('click', closeBarTab);
-  byId('download-csv-btn').addEventListener('click', downloadCSV);
 }
 
-function renderTabSwitching() {
+function initTabs() {
   document.querySelectorAll('.tab-btn').forEach((button) => {
     button.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      });
       document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
       button.classList.add('active');
+      button.setAttribute('aria-selected', 'true');
       byId(`tab-${button.dataset.tab}`).classList.add('active');
-      if (button.dataset.tab === 'reports') renderReports();
+      if (button.dataset.tab === 'reports' || button.dataset.tab === 'overview') renderCharts();
     });
   });
+}
+
+function initSelectors() {
+  const sites = ['All', ...new Set(RESERVATIONS.map(r => r.site))];
+  byId('reservation-site-filter').innerHTML = sites.map(site => `<option value="${site}">${site}</option>`).join('');
+  const statuses = ['All', ...new Set(RESERVATIONS.map(r => r.status))];
+  byId('reservation-status-filter').innerHTML = statuses.map(status => `<option value="${status}">${status}</option>`).join('');
+
+  const propertySites = ['Zomba HQ', 'Lilongwe', 'Blantyre Nyambadwe'];
+  byId('restaurant-site').innerHTML = propertySites.map(site => `<option value="${site}">${site}</option>`).join('');
+  byId('restaurant-table').innerHTML = Array.from({ length: 10 }, (_, i) => `<option value="T${i + 1}">Table ${i + 1}</option>`).join('');
+  byId('restaurant-room').innerHTML = ['', 'Walk-in', ...ROOMS.map(room => room.room_id)].map(room => `<option value="${room}">${room || 'None'}</option>`).join('');
+
+  byId('bar-selector').innerHTML = BAR_STORES.map(bar => `<option value="${bar.bar_id}">${bar.name} · ${bar.site}</option>`).join('');
+}
+
+function initEvents() {
+  byId('reservation-site-filter').addEventListener('change', renderReservations);
+  byId('reservation-status-filter').addEventListener('change', renderReservations);
+  byId('clear-restaurant-order').addEventListener('click', () => { restaurantOrder = []; renderRestaurantOrder(); });
+  byId('send-kitchen-btn').addEventListener('click', sendToKitchen);
+  byId('close-pay-restaurant-btn').addEventListener('click', closeRestaurantOrder);
+  byId('bar-selector').addEventListener('change', () => { renderBarMenu(); renderBarStock(); });
+  byId('clear-bar-order').addEventListener('click', () => { barOrder = []; renderBarOrder(); });
+  byId('close-bar-tab-btn').addEventListener('click', closeBarTab);
+  byId('download-csv-btn').addEventListener('click', downloadCSV);
 }
 
 function renderRooms() {
   byId('rooms-grid').innerHTML = ROOMS.map(room => `
     <article class="room-card">
-      <div class="room-thumb">${room.site}</div>
+      ${createRoomImageMarkup(room)}
       <div class="room-body">
-        <div class="section-tag">${room.room_id}</div>
+        <span class="section-tag">${room.room_id}</span>
         <h3>${room.type}</h3>
         <div class="room-meta">${room.amenities}</div>
         <div class="room-meta">Board: ${room.board} · Max: ${room.max_occupancy}</div>
@@ -213,64 +234,52 @@ function renderRooms() {
   `).join('');
 }
 
-function initSelectors() {
-  const sites = ['All', ...new Set(RESERVATIONS.map(r => r.site))];
-  byId('reservation-site-filter').innerHTML = sites.map(site => `<option value="${site}">${site}</option>`).join('');
-  const statuses = ['All', ...new Set(RESERVATIONS.map(r => r.status))];
-  byId('reservation-status-filter').innerHTML = statuses.map(status => `<option value="${status}">${status}</option>`).join('');
-
-  const propertySites = [...new Set(['Zomba HQ', 'Lilongwe', 'Blantyre Nyambadwe'])];
-  byId('restaurant-site').innerHTML = propertySites.map(site => `<option value="${site}">${site}</option>`).join('');
-  byId('restaurant-table').innerHTML = Array.from({length: 10}, (_, i) => `<option value="T${i+1}">Table ${i+1}</option>`).join('');
-  byId('restaurant-room').innerHTML = ['','Walk-in', ...ROOMS.map(room => room.room_id)].map(room => `<option value="${room}">${room || 'None'}</option>`).join('');
-}
-
 function renderReservations() {
   const site = byId('reservation-site-filter').value || 'All';
   const status = byId('reservation-status-filter').value || 'All';
-  const data = RESERVATIONS.filter(res => (site === 'All' || res.site === site) && (status === 'All' || res.status === status));
-  byId('reservations-body').innerHTML = data.map(res => `
+  const filtered = RESERVATIONS.filter(item => (site === 'All' || item.site === site) && (status === 'All' || item.status === status));
+  byId('reservations-body').innerHTML = filtered.map(item => `
     <tr>
-      <td>${res.id}</td>
-      <td>${res.guest_name}</td>
-      <td>${res.site}</td>
-      <td>${res.room_id}</td>
-      <td>${res.check_in}</td>
-      <td>${res.check_out}</td>
-      <td>${res.status}</td>
-      <td>${res.board}</td>
-      <td>${usd(res.total_room_charge)}</td>
+      <td>${item.id}</td>
+      <td>${item.guest_name}</td>
+      <td>${item.site}</td>
+      <td>${item.room_id}</td>
+      <td>${item.check_in}</td>
+      <td>${item.check_out}</td>
+      <td>${item.status}</td>
+      <td>${item.board}</td>
+      <td>${usd(item.total_room_charge)}</td>
     </tr>
   `).join('');
 }
 
+window.toggleHousekeeping = function(roomId) {
+  const states = ['Clean', 'Dirty', 'Maintenance'];
+  const current = housekeepingState[roomId] || 'Clean';
+  housekeepingState[roomId] = states[(states.indexOf(current) + 1) % states.length];
+  saveHousekeeping();
+  renderHousekeeping();
+};
+
 function renderHousekeeping() {
   byId('housekeeping-widget').innerHTML = ROOMS.map(room => {
-    const status = housekeepingState[room.room_id] || 'Clean';
-    const cls = `status-${status.toLowerCase()}`;
+    const state = housekeepingState[room.room_id] || 'Clean';
+    const stateClass = `status-${state.toLowerCase()}`;
     return `
       <div class="housekeeping-item">
         <div>
           <strong>${room.room_id}</strong>
-          <div class="room-meta">${room.site}</div>
+          <div class="meta">${room.site}</div>
         </div>
-        <button class="status-toggle ${cls}" onclick="toggleHousekeeping('${room.room_id}')">${status}</button>
+        <button class="status-toggle ${stateClass}" onclick="toggleHousekeeping('${room.room_id}')">${state}</button>
       </div>
     `;
   }).join('');
 }
 
-window.toggleHousekeeping = function(roomId) {
-  const order = ['Clean', 'Dirty', 'Maintenance'];
-  const current = housekeepingState[roomId] || 'Clean';
-  housekeepingState[roomId] = order[(order.indexOf(current) + 1) % order.length];
-  saveHousekeeping();
-  renderHousekeeping();
-};
-
 function renderRestaurantMenu() {
   const grouped = MENUS.restaurant.reduce((acc, item) => {
-    acc[item.category] ??= [];
+    if (!acc[item.category]) acc[item.category] = [];
     acc[item.category].push(item);
     return acc;
   }, {});
@@ -282,7 +291,7 @@ function renderRestaurantMenu() {
         ${items.map(item => `
           <button class="menu-item-btn" onclick="addRestaurantItem('${item.id}')">
             <strong>${item.name}</strong>
-            <span>${currency(item.price)}</span>
+            <span>${money(item.price)}</span>
           </button>
         `).join('')}
       </div>
@@ -291,96 +300,99 @@ function renderRestaurantMenu() {
 }
 
 window.addRestaurantItem = function(itemId) {
-  const item = MENU_ITEMS.find(menu => menu.id === itemId);
-  const found = restaurantOrder.find(entry => entry.id === itemId);
-  if (found) found.qty += 1;
-  else restaurantOrder.push({...item, qty: 1});
+  const item = MENU_ITEMS.find(entry => entry.id === itemId);
+  const existing = restaurantOrder.find(entry => entry.id === itemId);
+  if (existing) existing.qty += 1;
+  else restaurantOrder.push({ ...item, qty: 1 });
   renderRestaurantOrder();
 };
 
 window.changeRestaurantQty = function(itemId, delta) {
-  restaurantOrder = restaurantOrder.map(item => item.id === itemId ? {...item, qty: item.qty + delta} : item).filter(item => item.qty > 0);
+  restaurantOrder = restaurantOrder.map(item => item.id === itemId ? { ...item, qty: item.qty + delta } : item).filter(item => item.qty > 0);
   renderRestaurantOrder();
 };
 
+function getRestaurantTotals() {
+  const subtotal = restaurantOrder.reduce((sum, item) => sum + item.qty * item.price, 0);
+  const tax = Math.round(subtotal * TAX_RATE);
+  return { subtotal, tax, total: subtotal + tax };
+}
+
 function renderRestaurantOrder() {
-  const container = byId('restaurant-order-items');
+  const wrap = byId('restaurant-order-items');
   if (!restaurantOrder.length) {
-    container.className = 'order-items empty-state-mini';
-    container.textContent = 'No items yet.';
+    wrap.className = 'order-items empty-state-mini';
+    wrap.textContent = 'No items yet.';
   } else {
-    container.className = 'order-items';
-    container.innerHTML = restaurantOrder.map(item => `
+    wrap.className = 'order-items';
+    wrap.innerHTML = restaurantOrder.map(item => `
       <div class="order-row">
         <div>
           <strong>${item.name}</strong>
-          <small>${currency(item.price)} each</small>
+          <small>${money(item.price)} each</small>
         </div>
         <div class="qty-controls">
           <button class="qty-btn" onclick="changeRestaurantQty('${item.id}', -1)">−</button>
           <strong>${item.qty}</strong>
           <button class="qty-btn" onclick="changeRestaurantQty('${item.id}', 1)">+</button>
         </div>
-        <strong>${currency(item.qty * item.price)}</strong>
+        <strong>${money(item.qty * item.price)}</strong>
       </div>
     `).join('');
   }
-  const subtotal = restaurantOrder.reduce((sum, item) => sum + (item.qty * item.price), 0);
-  const tax = Math.round(subtotal * 0.165);
-  const total = subtotal + tax;
-  byId('restaurant-subtotal').textContent = currency(subtotal);
-  byId('restaurant-tax').textContent = currency(tax);
-  byId('restaurant-total').textContent = currency(total);
+  const totals = getRestaurantTotals();
+  byId('restaurant-subtotal').textContent = money(totals.subtotal);
+  byId('restaurant-tax').textContent = money(totals.tax);
+  byId('restaurant-total').textContent = money(totals.total);
 }
 
 function sendToKitchen() {
-  if (!restaurantOrder.length) return alert('Add items before sending to kitchen.');
-  const subtotal = restaurantOrder.reduce((sum, item) => sum + (item.qty * item.price), 0);
-  const tax = Math.round(subtotal * 0.165);
+  if (!restaurantOrder.length) return safeAlert('Add items before sending to kitchen.');
+  const totals = getRestaurantTotals();
   const order = {
     id: uid('KO'),
     site: byId('restaurant-site').value,
     table: byId('restaurant-table').value,
     room: byId('restaurant-room').value,
-    items: restaurantOrder.map(item => ({id: item.id, name: item.name, qty: item.qty, price: item.price})),
-    subtotal,
-    tax,
-    total: subtotal + tax,
+    items: restaurantOrder.map(item => ({ id: item.id, name: item.name, qty: item.qty, price: item.price })),
+    subtotal: totals.subtotal,
+    tax: totals.tax,
+    total: totals.total,
     status: 'Pending',
     created_at: nowTime()
   };
   KITCHEN_ORDERS.unshift(order);
   renderKitchenOrders();
-  alert(`Order ${order.id} sent to kitchen.`);
+  safeAlert(`Order ${order.id} sent to kitchen.`);
 }
 
 function closeRestaurantOrder() {
-  if (!restaurantOrder.length) return alert('No order to close.');
+  if (!restaurantOrder.length) return safeAlert('No order to close.');
   const site = byId('restaurant-site').value;
   restaurantOrder.forEach(item => {
-    SALES.push({
-      id: uid('S'),
-      date: TODAY,
-      site,
-      dept: 'Restaurant',
-      revenue: item.qty * item.price,
-      category: item.category
-    });
+    SALES.push({ id: uid('S'), date: TODAY, site, dept: 'Restaurant', revenue: item.qty * item.price, category: item.category });
   });
   restaurantOrder = [];
   renderRestaurantOrder();
   renderKPIs();
   renderReports();
-  alert('Restaurant order closed and payment posted.');
+  safeAlert('Restaurant order closed and payment posted.');
 }
 
+window.setKitchenStatus = function(orderId, status) {
+  const order = KITCHEN_ORDERS.find(item => item.id === orderId);
+  if (!order) return;
+  order.status = status;
+  renderKitchenOrders();
+};
+
 function renderKitchenOrders() {
-  const container = byId('kitchen-orders');
+  const wrap = byId('kitchen-orders');
   if (!KITCHEN_ORDERS.length) {
-    container.innerHTML = '<div class="empty-state-mini">No open kitchen orders.</div>';
+    wrap.innerHTML = '<div class="empty-state-mini">No open kitchen orders.</div>';
     return;
   }
-  container.innerHTML = KITCHEN_ORDERS.map(order => `
+  wrap.innerHTML = KITCHEN_ORDERS.map(order => `
     <div class="kitchen-order">
       <div class="kitchen-order-header">
         <div>
@@ -399,90 +411,81 @@ function renderKitchenOrders() {
   `).join('');
 }
 
-window.setKitchenStatus = function(orderId, status) {
-  const order = KITCHEN_ORDERS.find(item => item.id === orderId);
-  if (!order) return;
-  order.status = status;
-  renderKitchenOrders();
-};
-
-function renderBarSelectors() {
-  byId('bar-selector').innerHTML = BAR_STORES.map(bar => `<option value="${bar.bar_id}">${bar.name} · ${bar.site}</option>`).join('');
-}
-
 function getSelectedBar() {
-  return BAR_STORES.find(bar => bar.bar_id === byId('bar-selector').value) || BAR_STORES[0];
+  return BAR_STORES.find(item => item.bar_id === byId('bar-selector').value) || BAR_STORES[0];
 }
 
 function renderBarMenu() {
   const bar = getSelectedBar();
-  const availableIds = new Set(bar.items.map(item => item.id));
-  const items = MENUS.bar.filter(item => availableIds.has(item.id));
-  byId('bar-menu-buttons').innerHTML = items.map(item => `
+  const ids = new Set(bar.items.map(item => item.id));
+  const drinks = MENUS.bar.filter(item => ids.has(item.id));
+  byId('bar-menu-buttons').innerHTML = drinks.map(item => `
     <button class="quick-btn" onclick="addBarItem('${item.id}')">
       <strong>${item.name}</strong>
-      <span>${currency(item.price)}</span>
+      <span>${money(item.price)}</span>
     </button>
   `).join('');
 }
 
 window.addBarItem = function(itemId) {
-  const item = MENU_ITEMS.find(menu => menu.id === itemId);
-  const found = barOrder.find(entry => entry.id === itemId);
-  if (found) found.qty += 1;
-  else barOrder.push({...item, qty: 1});
+  const item = MENU_ITEMS.find(entry => entry.id === itemId);
+  const existing = barOrder.find(entry => entry.id === itemId);
+  if (existing) existing.qty += 1;
+  else barOrder.push({ ...item, qty: 1 });
   renderBarOrder();
 };
 
 window.changeBarQty = function(itemId, delta) {
-  barOrder = barOrder.map(item => item.id === itemId ? {...item, qty: item.qty + delta} : item).filter(item => item.qty > 0);
+  barOrder = barOrder.map(item => item.id === itemId ? { ...item, qty: item.qty + delta } : item).filter(item => item.qty > 0);
   renderBarOrder();
 };
 
 function renderBarOrder() {
-  const container = byId('bar-order-items');
+  const wrap = byId('bar-order-items');
   if (!barOrder.length) {
-    container.className = 'order-items empty-state-mini';
-    container.textContent = 'No drinks added.';
+    wrap.className = 'order-items empty-state-mini';
+    wrap.textContent = 'No drinks added.';
   } else {
-    container.className = 'order-items';
-    container.innerHTML = barOrder.map(item => `
+    wrap.className = 'order-items';
+    wrap.innerHTML = barOrder.map(item => `
       <div class="order-row">
         <div>
           <strong>${item.name}</strong>
-          <small>${currency(item.price)} each</small>
+          <small>${money(item.price)} each</small>
         </div>
         <div class="qty-controls">
           <button class="qty-btn" onclick="changeBarQty('${item.id}', -1)">−</button>
           <strong>${item.qty}</strong>
           <button class="qty-btn" onclick="changeBarQty('${item.id}', 1)">+</button>
         </div>
-        <strong>${currency(item.qty * item.price)}</strong>
+        <strong>${money(item.qty * item.price)}</strong>
       </div>
     `).join('');
   }
-  const total = barOrder.reduce((sum, item) => sum + (item.qty * item.price), 0);
-  byId('bar-total').textContent = currency(total);
+  const total = barOrder.reduce((sum, item) => sum + item.qty * item.price, 0);
+  byId('bar-total').textContent = money(total);
 }
 
 function closeBarTab() {
-  if (!barOrder.length) return alert('No drinks on this tab.');
+  if (!barOrder.length) return safeAlert('No drinks on this tab.');
   const bar = getSelectedBar();
   const tabName = byId('bar-tab-name').value.trim() || 'Walk-in';
   let total = 0;
+
   for (const item of barOrder) {
     const stockItem = bar.items.find(entry => entry.id === item.id);
-    if (!stockItem || stockItem.stock < item.qty) {
-      return alert(`Insufficient stock for ${item.name}.`);
-    }
+    if (!stockItem || stockItem.stock < item.qty) return safeAlert(`Insufficient stock for ${item.name}.`);
   }
+
   barOrder.forEach(item => {
     const stockItem = bar.items.find(entry => entry.id === item.id);
     stockItem.stock -= item.qty;
     total += item.qty * item.price;
   });
-  BAR_SALES.unshift({id: uid('BS'), date: TODAY, bar_id: bar.bar_id, site: bar.site, dept: 'Bars', revenue: total, items: barOrder.reduce((sum, item) => sum + item.qty, 0), tabName});
-  SALES.push({id: uid('S'), date: TODAY, site: bar.site, dept: 'Bars', revenue: total, category: 'Beverage'});
+
+  BAR_SALES.unshift({ id: uid('BS'), date: TODAY, bar_id: bar.bar_id, site: bar.site, dept: 'Bars', revenue: total, items: barOrder.reduce((sum, item) => sum + item.qty, 0), tabName });
+  SALES.push({ id: uid('S'), date: TODAY, site: bar.site, dept: 'Bars', revenue: total, category: 'Beverage' });
+
   barOrder = [];
   byId('bar-tab-name').value = '';
   renderBarOrder();
@@ -490,7 +493,7 @@ function closeBarTab() {
   renderBarSales();
   renderKPIs();
   renderReports();
-  alert(`Bar tab for ${tabName} closed.`);
+  safeAlert(`Bar tab for ${tabName} closed.`);
 }
 
 function renderBarStock() {
@@ -507,51 +510,53 @@ function renderBarStock() {
 }
 
 function renderBarSales() {
-  byId('bar-sales-list').innerHTML = BAR_SALES.slice(0, 6).map(sale => `
+  byId('bar-sales-list').innerHTML = BAR_SALES.slice(0, 6).map(item => `
     <div class="sale-item">
       <div>
-        <strong>${sale.bar_id}</strong>
-        <div class="meta">${sale.site} · ${sale.items} items${sale.tabName ? ` · ${sale.tabName}` : ''}</div>
+        <strong>${item.bar_id}</strong>
+        <div class="meta">${item.site} · ${item.items} items${item.tabName ? ` · ${item.tabName}` : ''}</div>
       </div>
-      <strong>${currency(sale.revenue)}</strong>
+      <strong>${money(item.revenue)}</strong>
     </div>
   `).join('');
 }
 
 function getTodaySales() {
-  return SALES.filter(sale => sale.date === TODAY);
+  return SALES.filter(item => item.date === TODAY);
 }
 
 function renderKPIs() {
-  const checkedIn = RESERVATIONS.filter(res => res.status === 'Checked In').length;
+  const checkedIn = RESERVATIONS.filter(item => item.status === 'Checked In').length;
   const occupancy = Math.round((checkedIn / ROOMS.length) * 100);
   const todaySales = getTodaySales();
-  const restaurantRevenue = todaySales.filter(s => s.dept === 'Restaurant').reduce((sum, s) => sum + s.revenue, 0);
-  const barRevenue = todaySales.filter(s => s.dept === 'Bars').reduce((sum, s) => sum + s.revenue, 0);
+  const restaurantRevenue = todaySales.filter(item => item.dept === 'Restaurant').reduce((sum, item) => sum + item.revenue, 0);
+  const barRevenue = todaySales.filter(item => item.dept === 'Bars').reduce((sum, item) => sum + item.revenue, 0);
+
   const cards = [
-    {label: 'Occupancy', value: `${occupancy}%`},
-    {label: 'Checked-in guests', value: checkedIn},
-    {label: 'Restaurant today', value: currency(restaurantRevenue)},
-    {label: 'Bars today', value: currency(barRevenue)}
+    { label: 'Occupancy', value: `${occupancy}%` },
+    { label: 'Checked-in guests', value: checkedIn },
+    { label: 'Restaurant today', value: money(restaurantRevenue) },
+    { label: 'Bars today', value: money(barRevenue) }
   ];
+
   byId('kpi-grid').innerHTML = cards.map(card => `<div class="kpi-card"><span>${card.label}</span><strong>${card.value}</strong></div>`).join('');
 }
 
 function renderReports() {
   const todaySales = getTodaySales();
-  const roomsRevenue = todaySales.filter(s => s.dept === 'Rooms').reduce((sum, s) => sum + s.revenue, 0);
-  const restaurantRevenue = todaySales.filter(s => s.dept === 'Restaurant').reduce((sum, s) => sum + s.revenue, 0);
-  const barsRevenue = todaySales.filter(s => s.dept === 'Bars').reduce((sum, s) => sum + s.revenue, 0);
+  const roomsRevenue = todaySales.filter(item => item.dept === 'Rooms').reduce((sum, item) => sum + item.revenue, 0);
+  const restaurantRevenue = todaySales.filter(item => item.dept === 'Restaurant').reduce((sum, item) => sum + item.revenue, 0);
+  const barsRevenue = todaySales.filter(item => item.dept === 'Bars').reduce((sum, item) => sum + item.revenue, 0);
 
   byId('daily-revenue-summary').innerHTML = [
-    {label: 'Rooms', value: currency(roomsRevenue)},
-    {label: 'Restaurant', value: currency(restaurantRevenue)},
-    {label: 'Bars', value: currency(barsRevenue)},
-    {label: 'Events', value: currency(EVENTS_REVENUE)}
-  ].map(card => `<div class="summary-card"><span>${card.label}</span><strong>${card.value}</strong></div>`).join('');
+    { label: 'Rooms', value: money(roomsRevenue) },
+    { label: 'Restaurant', value: money(restaurantRevenue) },
+    { label: 'Bars', value: money(barsRevenue) },
+    { label: 'Events', value: money(EVENTS_REVENUE) }
+  ].map(item => `<div class="summary-card"><span>${item.label}</span><strong>${item.value}</strong></div>`).join('');
 
-  const foodRevenue = todaySales.filter(s => s.category === 'Food').reduce((sum, s) => sum + s.revenue, 0);
-  const beverageRevenue = todaySales.filter(s => s.category === 'Beverage').reduce((sum, s) => sum + s.revenue, 0) + barsRevenue;
+  const foodRevenue = todaySales.filter(item => item.category === 'Food').reduce((sum, item) => sum + item.revenue, 0);
+  const beverageRevenue = todaySales.filter(item => item.category === 'Beverage').reduce((sum, item) => sum + item.revenue, 0) + barsRevenue;
   const totalRevenue = roomsRevenue + restaurantRevenue + barsRevenue;
   const foodCogs = Math.round(foodRevenue * 0.35);
   const beverageCogs = Math.round(beverageRevenue * 0.30);
@@ -560,10 +565,10 @@ function renderReports() {
   byId('pnl-view').innerHTML = `
     <h3>Mini P&amp;L</h3>
     <div class="pnl-grid">
-      <div><span>Revenue (Rooms + Restaurant + Bars)</span><strong>${currency(totalRevenue)}</strong></div>
-      <div><span>Estimated COGS - Food (35%)</span><strong>${currency(foodCogs)}</strong></div>
-      <div><span>Estimated COGS - Beverages (30%)</span><strong>${currency(beverageCogs)}</strong></div>
-      <div><span>Gross Profit</span><strong class="pnl-total">${currency(grossProfit)}</strong></div>
+      <div><span>Revenue (Rooms + Restaurant + Bars)</span><strong>${money(totalRevenue)}</strong></div>
+      <div><span>Estimated COGS - Food (35%)</span><strong>${money(foodCogs)}</strong></div>
+      <div><span>Estimated COGS - Beverages (30%)</span><strong>${money(beverageCogs)}</strong></div>
+      <div><span>Gross Profit</span><strong class="pnl-total">${money(grossProfit)}</strong></div>
     </div>
   `;
 
@@ -571,8 +576,11 @@ function renderReports() {
 }
 
 function renderCharts() {
-  const checkedBySite = ['Zomba HQ', 'Lilongwe', 'Blantyre Nyambadwe'].map(site => RESERVATIONS.filter(r => r.site === site && r.status === 'Checked In').length);
-  const roomsBySite = ['Zomba HQ', 'Lilongwe', 'Blantyre Nyambadwe'].map(site => ROOMS.filter(room => room.site === site).length);
+  if (typeof Chart === 'undefined') return;
+
+  const sites = ['Zomba HQ', 'Lilongwe', 'Blantyre Nyambadwe'];
+  const checkedBySite = sites.map(site => RESERVATIONS.filter(item => item.site === site && item.status === 'Checked In').length);
+  const roomsBySite = sites.map(site => ROOMS.filter(item => item.site === site).length);
   const occupancyData = checkedBySite.map((count, index) => Math.round((count / roomsBySite[index]) * 100) || 0);
 
   if (occupancyChart) occupancyChart.destroy();
@@ -580,44 +588,41 @@ function renderCharts() {
     type: 'line',
     data: {
       labels: ['Zomba HQ', 'Lilongwe', 'Blantyre'],
-      datasets: [{label: 'Occupancy %', data: occupancyData, borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.18)', tension: 0.35, fill: true}]
+      datasets: [{ label: 'Occupancy %', data: occupancyData, borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,.16)', tension: .35, fill: true }]
     },
-    options: {responsive: true, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, max: 100}}}
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
   });
 
   const todaySales = getTodaySales();
-  const deptTotals = ['Rooms', 'Restaurant', 'Bars', 'Events'].map(dept => {
-    if (dept === 'Events') return EVENTS_REVENUE;
-    return todaySales.filter(s => s.dept === dept).reduce((sum, s) => sum + s.revenue, 0);
-  });
+  const deptTotals = ['Rooms', 'Restaurant', 'Bars', 'Events'].map(dept => dept === 'Events' ? EVENTS_REVENUE : todaySales.filter(item => item.dept === dept).reduce((sum, item) => sum + item.revenue, 0));
   if (revenueDeptChart) revenueDeptChart.destroy();
   revenueDeptChart = new Chart(byId('revenueDeptChart'), {
     type: 'bar',
     data: {
       labels: ['Rooms', 'Restaurant', 'Bars', 'Events'],
-      datasets: [{label: 'Revenue', data: deptTotals, backgroundColor: ['#1d4ed8', '#0f766e', '#f59e0b', '#7c3aed']}]
+      datasets: [{ label: 'Revenue', data: deptTotals, backgroundColor: ['#1d4ed8', '#0f766e', '#f59e0b', '#7c3aed'] }]
     },
-    options: {responsive: true, plugins: {legend: {display: false}}}
+    options: { responsive: true, plugins: { legend: { display: false } } }
   });
 
-  const barTotals = BAR_STORES.map(bar => BAR_SALES.filter(sale => sale.bar_id === bar.bar_id && sale.date === TODAY).reduce((sum, sale) => sum + sale.revenue, 0));
+  const barTotals = BAR_STORES.map(bar => BAR_SALES.filter(item => item.bar_id === bar.bar_id && item.date === TODAY).reduce((sum, item) => sum + item.revenue, 0));
   if (barRevenueChart) barRevenueChart.destroy();
   barRevenueChart = new Chart(byId('barRevenueChart'), {
     type: 'pie',
     data: {
       labels: BAR_STORES.map(bar => bar.name),
-      datasets: [{data: barTotals, backgroundColor: ['#0f766e', '#1d4ed8']}]
+      datasets: [{ data: barTotals, backgroundColor: ['#0f766e', '#1d4ed8'] }]
     },
-    options: {responsive: true}
+    options: { responsive: true }
   });
 }
 
 function downloadCSV() {
   const rows = [['date', 'site', 'dept', 'revenue']];
-  getTodaySales().forEach(sale => rows.push([sale.date, sale.site, sale.dept, sale.revenue]));
+  getTodaySales().forEach(item => rows.push([item.date, item.site, item.dept, item.revenue]));
   rows.push([TODAY, 'All Sites', 'Events', EVENTS_REVENUE]);
   const csv = rows.map(row => row.join(',')).join('\n');
-  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = 'annies-lodge-daily-revenue.csv';
@@ -626,4 +631,27 @@ function downloadCSV() {
   document.body.removeChild(link);
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+function renderAll() {
+  renderKPIs();
+  renderReservations();
+  renderHousekeeping();
+  renderRestaurantMenu();
+  renderRestaurantOrder();
+  renderKitchenOrders();
+  renderBarMenu();
+  renderBarOrder();
+  renderBarStock();
+  renderBarSales();
+  renderReports();
+}
+
+function init() {
+  initSplash();
+  initLogin();
+  initTabs();
+  initSelectors();
+  initEvents();
+  renderRooms();
+}
+
+document.addEventListener('DOMContentLoaded', init);
