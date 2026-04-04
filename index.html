@@ -3,39 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Annie's Lodge Malawi | ERP & PMS Demo</title>
+  <meta name="description" content="Annie's Lodge Malawi single-page PMS, POS, bar and reporting demo" />
+  <title>Annie's Lodge Malawi | PMS, POS & ERP Demo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="./css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="./js/app.js"></script>
 </head>
 <body>
-  <div id="splash-screen" class="splash-screen active">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <div id="splash-screen" class="splash-screen" aria-hidden="true">
     <div class="splash-card">
       <div class="brand-mark">AL</div>
       <h1>Annie's Lodge</h1>
-      <p>Hospitality ERP & PMS Demo</p>
+      <p>Hospitality operations demo</p>
     </div>
   </div>
 
-  <main class="app-shell">
+  <main class="app-shell" id="main-content">
     <section id="login-screen" class="login-screen active">
       <div class="login-card card">
-        <div class="section-tag">Demo Access</div>
+        <p class="section-tag">Demo access</p>
         <h2>Welcome back</h2>
-        <p>Use <strong>admin</strong> / <strong>demo</strong> to access the dashboard.</p>
-        <form id="login-form" class="login-form">
-          <label>
-            Username
-            <input type="text" id="username" value="admin" required />
-          </label>
-          <label>
-            Password
-            <input type="password" id="password" value="demo" required />
-          </label>
+        <p>Login with <strong>admin</strong> / <strong>demo</strong>.</p>
+        <form id="login-form" class="login-form" autocomplete="on">
+          <label for="username">Username</label>
+          <input type="text" id="username" value="admin" required />
+
+          <label for="password">Password</label>
+          <input type="password" id="password" value="demo" required />
+
           <button type="submit" class="btn btn-primary btn-block">Login</button>
-          <p id="login-message" class="helper-text"></p>
+          <p id="login-message" class="helper-text" aria-live="polite"></p>
         </form>
       </div>
     </section>
@@ -47,20 +49,20 @@
           <h1>ERP & PMS Simulator</h1>
         </div>
         <div class="topbar-actions">
-          <span class="pill success">Offline-ready demo</span>
+          <span class="pill success">Offline-style demo</span>
           <button id="logout-btn" class="btn btn-secondary">Logout</button>
         </div>
       </header>
 
       <section class="hero card hero-card">
         <div>
-          <p class="section-tag">Multi-property operations</p>
-          <h2>Zomba, Lilongwe & Blantyre in one dashboard</h2>
-          <p>Manage rooms, reservations, housekeeping, restaurant orders, bar tabs, and simple financial reporting from a single-page demo app.</p>
+          <p class="section-tag">Multi-property hospitality</p>
+          <h2>Rooms, housekeeping, restaurant, bars, and reports in one place</h2>
+          <p>Built for a GitHub Pages deployment with in-browser demo data, mobile-friendly layouts, and no backend dependency.</p>
         </div>
         <div class="hero-stats">
           <div class="metric-mini">
-            <span>Sites</span>
+            <span>Properties</span>
             <strong>3</strong>
           </div>
           <div class="metric-mini">
@@ -68,8 +70,8 @@
             <strong>2</strong>
           </div>
           <div class="metric-mini">
-            <span>POS</span>
-            <strong>Live Demo</strong>
+            <span>Mode</span>
+            <strong>SPA Demo</strong>
           </div>
         </div>
       </section>
@@ -77,8 +79,8 @@
       <section class="rooms-preview">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Rooms</p>
-            <h2>Property inventory</h2>
+            <p class="eyebrow">Accommodation</p>
+            <h2>Rooms by property</h2>
           </div>
         </div>
         <div id="rooms-grid" class="rooms-grid"></div>
@@ -87,19 +89,19 @@
       <section class="dashboard card">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">ERP dashboard</p>
+            <p class="eyebrow">Dashboard</p>
             <h2>Operations center</h2>
           </div>
           <button id="download-csv-btn" class="btn btn-secondary">Download CSV</button>
         </div>
 
-        <div class="dashboard-tabs">
-          <button class="tab-btn active" data-tab="overview">Overview</button>
-          <button class="tab-btn" data-tab="reservations">Reservations</button>
-          <button class="tab-btn" data-tab="restaurant">Restaurant</button>
-          <button class="tab-btn" data-tab="bars">Bars</button>
-          <button class="tab-btn" data-tab="reports">Reports</button>
-          <button class="tab-btn" data-tab="payments">Payments</button>
+        <div class="dashboard-tabs" role="tablist" aria-label="ERP sections">
+          <button class="tab-btn active" role="tab" aria-selected="true" data-tab="overview">Overview</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-tab="reservations">Reservations</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-tab="restaurant">Restaurant</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-tab="bars">Bars</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-tab="reports">Reports</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-tab="payments">Payments</button>
         </div>
 
         <div class="tab-panels">
@@ -107,15 +109,13 @@
             <div class="kpi-grid" id="kpi-grid"></div>
             <div class="overview-grid">
               <div class="card inset-card">
-                <div class="section-heading compact">
-                  <h3>Occupancy trend</h3>
-                </div>
+                <div class="section-heading compact"><h3>Occupancy trend</h3></div>
                 <canvas id="occupancyChart" height="140"></canvas>
               </div>
               <div class="card inset-card">
                 <div class="section-heading compact">
                   <h3>Housekeeping</h3>
-                  <span class="pill warning">Tap to update</span>
+                  <span class="pill warning">Tap to toggle</span>
                 </div>
                 <div id="housekeeping-widget" class="housekeeping-widget"></div>
               </div>
@@ -124,28 +124,20 @@
 
           <section class="tab-panel" id="tab-reservations">
             <div class="filter-row">
-              <label>
-                Site
+              <div>
+                <label for="reservation-site-filter">Site</label>
                 <select id="reservation-site-filter"></select>
-              </label>
-              <label>
-                Status
+              </div>
+              <div>
+                <label for="reservation-status-filter">Status</label>
                 <select id="reservation-status-filter"></select>
-              </label>
+              </div>
             </div>
             <div class="table-wrap">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Guest</th>
-                    <th>Site</th>
-                    <th>Room</th>
-                    <th>Check-in</th>
-                    <th>Check-out</th>
-                    <th>Status</th>
-                    <th>Board</th>
-                    <th>Charge</th>
+                    <th>ID</th><th>Guest</th><th>Site</th><th>Room</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Board</th><th>Charge</th>
                   </tr>
                 </thead>
                 <tbody id="reservations-body"></tbody>
@@ -161,25 +153,24 @@
                   <span class="pill">Table service</span>
                 </div>
                 <div class="filter-row three-up">
-                  <label>
-                    Site
+                  <div>
+                    <label for="restaurant-site">Site</label>
                     <select id="restaurant-site"></select>
-                  </label>
-                  <label>
-                    Table
+                  </div>
+                  <div>
+                    <label for="restaurant-table">Table</label>
                     <select id="restaurant-table"></select>
-                  </label>
-                  <label>
-                    Room (opt.)
+                  </div>
+                  <div>
+                    <label for="restaurant-room">Room (optional)</label>
                     <select id="restaurant-room"></select>
-                  </label>
+                  </div>
                 </div>
                 <div id="restaurant-menu-groups" class="menu-groups"></div>
               </div>
-
               <aside class="card inset-card order-sidebar">
                 <div class="section-heading compact">
-                  <h3>Current Order</h3>
+                  <h3>Current order</h3>
                   <button id="clear-restaurant-order" class="btn btn-ghost btn-small">Clear</button>
                 </div>
                 <div id="restaurant-order-items" class="order-items empty-state-mini">No items yet.</div>
@@ -194,11 +185,10 @@
                 </div>
               </aside>
             </div>
-
             <div class="card inset-card kitchen-card">
               <div class="section-heading compact">
-                <h3>Kitchen View</h3>
-                <span class="pill success">Open orders</span>
+                <h3>Kitchen view</h3>
+                <span class="pill success">Live queue</span>
               </div>
               <div id="kitchen-orders" class="kitchen-orders"></div>
             </div>
@@ -209,24 +199,23 @@
               <div class="card inset-card">
                 <div class="section-heading compact">
                   <h3>Bar POS</h3>
-                  <span class="pill">Quick serve</span>
+                  <span class="pill">Fast serve</span>
                 </div>
                 <div class="filter-row two-up">
-                  <label>
-                    Bar
+                  <div>
+                    <label for="bar-selector">Bar</label>
                     <select id="bar-selector"></select>
-                  </label>
-                  <label>
-                    Bartender tab name
-                    <input id="bar-tab-name" type="text" placeholder="Walk-in / Room guest" />
-                  </label>
+                  </div>
+                  <div>
+                    <label for="bar-tab-name">Tab name</label>
+                    <input id="bar-tab-name" type="text" placeholder="Walk-in / guest" />
+                  </div>
                 </div>
                 <div id="bar-menu-buttons" class="quick-buttons"></div>
               </div>
-
               <aside class="card inset-card order-sidebar">
                 <div class="section-heading compact">
-                  <h3>Running Tab</h3>
+                  <h3>Running tab</h3>
                   <button id="clear-bar-order" class="btn btn-ghost btn-small">Clear</button>
                 </div>
                 <div id="bar-order-items" class="order-items empty-state-mini">No drinks added.</div>
@@ -238,18 +227,13 @@
                 </div>
               </aside>
             </div>
-
             <div class="inventory-grid">
               <div class="card inset-card">
-                <div class="section-heading compact">
-                  <h3>Bar stock</h3>
-                </div>
+                <div class="section-heading compact"><h3>Bar stock</h3></div>
                 <div id="bar-stock-view" class="stock-list"></div>
               </div>
               <div class="card inset-card">
-                <div class="section-heading compact">
-                  <h3>Recent bar sales</h3>
-                </div>
+                <div class="section-heading compact"><h3>Recent bar sales</h3></div>
                 <div id="bar-sales-list" class="sales-list"></div>
               </div>
             </div>
@@ -259,15 +243,11 @@
             <div class="report-cards" id="daily-revenue-summary"></div>
             <div class="overview-grid reports-grid">
               <div class="card inset-card">
-                <div class="section-heading compact">
-                  <h3>Department revenue</h3>
-                </div>
+                <div class="section-heading compact"><h3>Revenue by department</h3></div>
                 <canvas id="revenueDeptChart" height="160"></canvas>
               </div>
               <div class="card inset-card">
-                <div class="section-heading compact">
-                  <h3>Bar comparison</h3>
-                </div>
+                <div class="section-heading compact"><h3>Bar revenue split</h3></div>
                 <canvas id="barRevenueChart" height="160"></canvas>
               </div>
             </div>
@@ -277,9 +257,7 @@
           <section class="tab-panel" id="tab-payments">
             <div class="payment-grid">
               <div class="card inset-card">
-                <div class="section-heading compact">
-                  <h3>Payment channels</h3>
-                </div>
+                <div class="section-heading compact"><h3>Payment channels</h3></div>
                 <div class="simple-list">
                   <div><span>Cash</span><strong>Enabled</strong></div>
                   <div><span>Airtel Money</span><strong>Enabled</strong></div>
@@ -288,10 +266,8 @@
                 </div>
               </div>
               <div class="card inset-card">
-                <div class="section-heading compact">
-                  <h3>Settlement note</h3>
-                </div>
-                <p class="helper-block">This phase runs fully in-browser with demo transactions only. Sales and stock updates are stored in memory while housekeeping state is saved locally for offline continuity.</p>
+                <div class="section-heading compact"><h3>Settlement note</h3></div>
+                <p class="helper-block">This GitHub Pages phase runs entirely in the browser. Housekeeping is saved locally, while sales and POS demo data reset when the page reloads.</p>
               </div>
             </div>
           </section>
@@ -299,7 +275,5 @@
       </section>
     </section>
   </main>
-
-  <script src="js/app.js"></script>
 </body>
 </html>
